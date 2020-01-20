@@ -4,8 +4,14 @@
 \alias{make_async_evaluator}
 \title{Create Asynchronous Evaluator to Queue Tasks}
 \usage{
-make_async_evaluator(name, path = tempfile(), n_nodes = 1,
-  n_subnodes = future::availableCores() - 1, verbose = FALSE, ...)
+make_async_evaluator(
+  name,
+  path = tempfile(),
+  n_nodes = 1,
+  n_subnodes = future::availableCores() - 1,
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{name}{unique name for the evaluator}
@@ -59,7 +65,7 @@ Queue and run an R expression.
 \item{\code{expr}}{
  can be anything except for
 \code{q()}, which terminates the session. \code{'rlang'}
-\code{\link[rlang]{quasiquotation}} is also supported. For example, you
+\code{\link[rlang]{nse-force}} is also supported. For example, you
 can use \code{`!!`} to quasi-quote the expression and unquote the values.
 }
 

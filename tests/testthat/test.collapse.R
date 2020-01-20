@@ -36,3 +36,6 @@ test_that('testing collapse with complex number', {
 
   expect_lt(max(abs(r1 - r2)), 1e-10)
 })
+
+
+

@@ -109,7 +109,7 @@ FileQueue <- R6::R6Class(
       }
 
       if( !dir.exists( private$root_path ) ){
-        stop('path is not a directory')
+        cat2('path is not a directory', level = 'FATAL')
       }
 
       tmp <- file.path(private$root_path, 'HEAD')
@@ -144,29 +144,34 @@ FileQueue <- R6::R6Class(
       private$db_dir <- normalizePath(tmp, mustWork = TRUE)
 
 
-      self$clean(preserve = TRUE)
-      self$validate()
+      self$`@clean`(preserve = TRUE)
+      self$`@validate`()
 
     },
 
     initialize = function(path = tempfile()){
       dir_create(path)
       private$root_path <- normalizePath(path)
-      self$lockfile <- file.path(path, 'LOCK')
+      lockpath <- file.path(path, 'LOCK')
+      if(!file.exists(lockpath)){
+        writeLines(rand_string(), lockpath)
+      }
+      self$lockfile <- readLines(con = lockpath, n = 1)
       self$connect()
     },
 
     destroy = function(){
+      dipsaus_unlock(self$lockfile)
       unlink(private$db_dir, recursive = TRUE, force = TRUE)
-      unlink(self$lockfile, force = TRUE)
+      unlink(file.path(private$root_path, 'LOCK'), force = TRUE)
       unlink(private$head_file, force = TRUE)
       unlink(private$total_file, force = TRUE)
       unlink(private$header_file, force = TRUE)
 
       # If user accidentally set root_path to be '/', removing it would be a disaster
-      unlink(private$root_path, recursive = FALSE, force = FALSE)
+      unlink(private$root_path, recursive = TRUE, force = FALSE)
 
-      delayedAssign('.lockfile', {stop('Queue destroyed')}, assign.env = private)
+      delayedAssign('.lockfile', {cat2('Queue destroyed', level = 'FATAL')}, assign.env = private)
 
       invisible()
     }

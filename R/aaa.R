@@ -7,12 +7,8 @@
 #' @importFrom data.table fread
 #' @importFrom data.table fwrite
 #' @importFrom fastmap fastmap
-#' @importFrom filelock lock
-#' @importFrom filelock unlock
 #' @importFrom parallel clusterEvalQ
 #' @importFrom parallel stopCluster
-#' @importFrom qs qsave
-#' @importFrom qs qread
 #' @importFrom txtq txtq
 #' @useDynLib dipsaus, .registration = TRUE
 NULL

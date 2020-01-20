@@ -4,10 +4,7 @@
 #' The difference is \code{AbstractQueue} introduce an abstract class that can
 #' be extended and can queue not only text messages, but also arbitrary R
 #' objects, including expressions and environments. All the queue types in this
-#' package inherit this class. See \code{\link[dipsaus]{queue}} for
-#' implementations.
-#'
-#' @seealso \code{\link[dipsaus]{queue}}
+#' package inherit this class.
 #'
 #' @name AbstractQueue
 #'
@@ -235,32 +232,11 @@ AbstractQueue <- R6::R6Class(
       force(expr)
     },
 
-    default_get_locker = function(time_out = Inf, intervals = 10){
-      if( time_out <= 0 ){
-        stop('Cannot get locker, timeout!', call. = FALSE)
-      }
-      # Locker always fails in mac, so lock the file is not enough
-      locker_owner <- readLines(self$lockfile)
-      if(length(locker_owner) == 1 && locker_owner != '' && !isTRUE(locker_owner == self$id)){
-        Sys.sleep(intervals / 1000)
-        return(private$default_get_locker(time_out - intervals, intervals))
-      }
-      # Lock the file, exclude all others
-      private$lock <- filelock::lock(self$lockfile, timeout = time_out)
-
-      # write ID
-      write(self$id, self$lockfile, append = FALSE)
+    default_get_locker = function(timeout = 5){
+      dipsaus_lock(self$lockfile, timeout = timeout)
     },
     default_free_locker = function(){
-      on.exit({
-        if( !is.null(private$lock) ){
-          filelock::unlock(private$lock)
-          private$lock <- NULL
-        }
-      })
-      if( !is.null(private$lock) ){
-        write('', self$lockfile, append = FALSE)
-      }
+      dipsaus_unlock(self$lockfile)
     }
 
   ),
@@ -330,17 +306,17 @@ AbstractQueue <- R6::R6Class(
 
     # Fixed usage, don't override unless you know what's inside
     push = function(value, message = '', ...){
-      time <- base64url::base64_urlencode(microtime())
+      time <- safe_urlencode(microtime())
 
-      digest_val <- digest::digest(value)
+      digest_val <- digest::digest(message)
 
       key <- digest::digest(list(self$id, time, digest_val))
 
-      hash <- base64url::base64_urlencode(self$`@store_value`(value, key))
+      hash <- safe_urlencode(self$`@store_value`(value, key))
 
-      message <- base64url::base64_urlencode(message)
+      message <- safe_urlencode(message)
       if(length(hash) != 1){
-        stop('store_value returns hash value that has length != 1')
+        cat2('store_value returns hash value that has length != 1', level = 'FATAL')
       }
       out <- paste( time, key, hash, message, sep = "|" )
       private$exclusive({
@@ -364,10 +340,10 @@ AbstractQueue <- R6::R6Class(
     # Print single item, similar to `print_items`, returns a list
     print_item = function(item){
       list(
-        time = base64url::base64_urldecode(item[[1]]),
+        time = safe_urldecode(item[[1]]),
         key = item[[2]],
-        hash = base64url::base64_urldecode(item[[3]]),
-        message = base64url::base64_urldecode(item[[4]])
+        hash = safe_urldecode(item[[3]]),
+        message = safe_urldecode(item[[4]])
       )
     },
 
@@ -381,7 +357,7 @@ AbstractQueue <- R6::R6Class(
       out <- self$log(n=n, all=FALSE)
       if( !length(out) ){ return(null_item) }
       if( !is.matrix(out) && !is.data.frame(out) ){
-        stop('list must return a matrix or a data.frame')
+        cat2('list must return a matrix or a data.frame', level = 'FATAL')
       }
       nrows <- nrow(out)
       if(!nrows){ return( null_item ) }
@@ -402,7 +378,7 @@ AbstractQueue <- R6::R6Class(
         out <- self$`@log`(n = n)
         if( !length(out) ){ return(list()) }
         if( !is.matrix(out) && !is.data.frame(out) ){
-          stop('list must return a matrix or a data.frame')
+          cat2('list must return a matrix or a data.frame', level = 'FATAL')
         }
         nrows <- nrow(out)
         if(!nrows){ return( list() ) }
@@ -501,8 +477,9 @@ AbstractQueue <- R6::R6Class(
     # and call `delayedAssign('.lockfile', {stop(...)}, assign.env=private)`
     # to raise error if a destroyed queue is called again later.
     destroy = function(){
+      private$default_free_locker()
       delayedAssign('.lockfile', {
-        stop("Queue is destroyed", call. = FALSE)
+        cat2("Queue is destroyed", level = 'FATAL')
       }, assign.env=private)
     }
   ),
@@ -523,26 +500,28 @@ AbstractQueue <- R6::R6Class(
         private$default_free_locker()
         private$.lockfile <- v
       }else if(!length(private$.lockfile)){
-        private$.lockfile <- tempfile(pattern = 'locker')
+        private$.lockfile <- rand_string()
       }
-      file_create(private$.lockfile)
       private$.lockfile
     },
 
     # a safe wrapper for `@get_head` and `@set_head`
     head = function(v) {
       if(missing(v)){ return(as.integer(self$`@get_head`())) }
-      if( length(v) != 1 ){ stop('head must be a number') }
-      if( !is.numeric(v) || v < 0 ){ stop('head must be a non-negative integer') }
-      if( v > self$total ){ stop('head must not exceed total') }
+      if( length(v) != 1 ){ cat2('head must be a number',level = 'FATAL') }
+      if( !is.numeric(v) || v < 0 ){ cat2('head must be a non-negative integer',
+                                          level = 'FATAL') }
+      if( v > self$total ){ cat2('head must not exceed total',
+                                 level = 'FATAL') }
       self$`@set_head`( v )
     },
 
     # a safe wrapper for `@get_total` and `@set_total`
     total = function(v){
       if(missing(v)){ return(as.integer(self$`@get_total`())) }
-      if( length(v) != 1 ){ stop('total must be a number') }
-      if( !is.numeric(v) || v < 0 ){ stop('total must be a non-negative integer') }
+      if( length(v) != 1 ){ cat2('total must be a number', level = 'FATAL') }
+      if( !is.numeric(v) || v < 0 ){ cat2('total must be a non-negative integer',
+                                          level = 'FATAL') }
       self$`@set_total`( v )
     },
 

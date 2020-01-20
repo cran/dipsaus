@@ -5,6 +5,39 @@
 
 using namespace Rcpp;
 
+// arrayShift
+Rcpp::NumericVector arrayShift(const Rcpp::NumericVector x, const int64_t tidx, const int64_t sidx, const Rcpp::IntegerVector& shift, const Rcpp::IntegerVector& dims);
+RcppExport SEXP _dipsaus_arrayShift(SEXP xSEXP, SEXP tidxSEXP, SEXP sidxSEXP, SEXP shiftSEXP, SEXP dimsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< const int64_t >::type tidx(tidxSEXP);
+    Rcpp::traits::input_parameter< const int64_t >::type sidx(sidxSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::IntegerVector& >::type shift(shiftSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::IntegerVector& >::type dims(dimsSEXP);
+    rcpp_result_gen = Rcpp::wrap(arrayShift(x, tidx, sidx, shift, dims));
+    return rcpp_result_gen;
+END_RCPP
+}
+// baselineArray
+Rcpp::NumericVector baselineArray(const Rcpp::NumericVector& x, const Rcpp::NumericVector& bl, const Rcpp::IntegerVector dims, const Rcpp::IntegerVector bldims, const int tidx, const Rcpp::IntegerVector& per, const Rcpp::IntegerVector& rest, const int method);
+RcppExport SEXP _dipsaus_baselineArray(SEXP xSEXP, SEXP blSEXP, SEXP dimsSEXP, SEXP bldimsSEXP, SEXP tidxSEXP, SEXP perSEXP, SEXP restSEXP, SEXP methodSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type x(xSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type bl(blSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::IntegerVector >::type dims(dimsSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::IntegerVector >::type bldims(bldimsSEXP);
+    Rcpp::traits::input_parameter< const int >::type tidx(tidxSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::IntegerVector& >::type per(perSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::IntegerVector& >::type rest(restSEXP);
+    Rcpp::traits::input_parameter< const int >::type method(methodSEXP);
+    rcpp_result_gen = Rcpp::wrap(baselineArray(x, bl, dims, bldims, tidx, per, rest, method));
+    return rcpp_result_gen;
+END_RCPP
+}
 // collapser
 Rcpp::NumericVector collapser(Rcpp::NumericVector x, Rcpp::IntegerVector dims, Rcpp::IntegerVector keep);
 RcppExport SEXP _dipsaus_collapser(SEXP xSEXP, SEXP dimsSEXP, SEXP keepSEXP) {
@@ -17,4 +50,16 @@ BEGIN_RCPP
     rcpp_result_gen = Rcpp::wrap(collapser(x, dims, keep));
     return rcpp_result_gen;
 END_RCPP
+}
+
+static const R_CallMethodDef CallEntries[] = {
+    {"_dipsaus_arrayShift", (DL_FUNC) &_dipsaus_arrayShift, 5},
+    {"_dipsaus_baselineArray", (DL_FUNC) &_dipsaus_baselineArray, 8},
+    {"_dipsaus_collapser", (DL_FUNC) &_dipsaus_collapser, 3},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_dipsaus(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
 }
