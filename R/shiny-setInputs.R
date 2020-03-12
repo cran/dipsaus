@@ -2,7 +2,8 @@
 #' @title Set Shiny Input
 #' @description Shiny `input' object is read-only reactive list. When try to
 #' assign values to input, errors usually occur. This method provides several
-#' work-around to set values to input.
+#' work-around to set values to input. Please use along with
+#' \code{\link{use_shiny_dipsaus}}.
 #' @param session shiny session, see shiny \code{\link[shiny]{domains}}
 #' @param inputId character, input ID
 #' @param value the value to assign
@@ -13,9 +14,43 @@
 #' @param method characters, options are "proxy", "serialize", "value",
 #' "expression". "proxy" is recommended, other methods are experimental.
 #' @param quoted is value quoted? Only used when method is "expression"
+#' @examples
+#'
+#' library(shiny)
+#' library(dipsaus)
+#' ui <- fluidPage(
+#'   # Register widgets
+#'   use_shiny_dipsaus(),
+#'   actionButton('run', 'Set Input'),
+#'   verbatimTextOutput('input_value')
+#' )
+#'
+#' server <- function(input, output, session) {
+#'   start = Sys.time()
+#'
+#'   output$input_value <- renderPrint({
+#'
+#'     now <- input$key
+#'     now %?<-% start
+#'     cat('This app has been opened for ',
+#'         difftime(now, start, units = 'sec'), ' seconds')
+#'   })
+#'
+#'   observeEvent(input$run, {
+#'     # setting input$key to Sys.time()
+#'     set_shiny_input(session, 'key', Sys.time())
+#'   })
+#' }
+#'
+#' if(interactive()){
+#'   shinyApp(ui, server)
+#' }
+#'
+#'
 #' @export
 set_shiny_input <- function(
-  session, inputId, value, priority = c('event', 'deferred', 'immediate'),
+  session = shiny::getDefaultReactiveDomain(), inputId, value,
+  priority = c('event', 'deferred', 'immediate'),
   method = c('proxy', 'serialize', 'value', 'expression'), quoted = TRUE){
 
   priority <- match.arg(priority)
@@ -42,7 +77,7 @@ set_shiny_input <- function(
     },
     'proxy' = {
       session$userData$dipsaus_reserved %?<-% new.env(parent = emptyenv())
-      session$userData$dipsaus_reserved$proxy_data %?<-% new.env(parent = emptyenv())
+      session$userData$dipsaus_reserved$proxy_data %?<-% fastmap2()
       session$userData$dipsaus_reserved$proxy_data[[inputId]] <- value
       raw <- inputId
     }
@@ -54,7 +89,22 @@ set_shiny_input <- function(
     value = raw,
     priority = priority
   ))
+  invisible()
 }
+
+
+
+#' @title Set up shiny plugins
+#' @description This function must be called from a Shiny app's UI in order for
+#' some widgets to work.
+#' @export
+use_shiny_dipsaus <- function(){
+  shiny::singleton(shiny::tags$head(
+    shiny::tags$link(rel="stylesheet", type="text/css", href="dipsaus/dipsaus.css"),
+    shiny::tags$script(src="dipsaus/dipsaus-dipterix-lib.js")
+  ))
+}
+
 
 registerSetInputs <- function(){
   # register input
@@ -83,9 +133,9 @@ registerSetInputs <- function(){
       },
 
       'proxy' = {
-        if(is.environment(session$userData$dipsaus_reserved$proxy_data)){
+        if(inherits(session$userData$dipsaus_reserved$proxy_data, 'fastmap2')){
           re <- session$userData$dipsaus_reserved$proxy_data[[raw]]
-          rm(list = raw, envir = session$userData$dipsaus_reserved$proxy_data)
+          session$userData$dipsaus_reserved$proxy_data$`@remove`(raw)
           re
         }else{
           NULL

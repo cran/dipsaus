@@ -4,12 +4,11 @@
 #' @importFrom R6 R6Class
 #' @importFrom base64url base64_urldecode
 #' @importFrom base64url base64_urlencode
-#' @importFrom data.table fread
-#' @importFrom data.table fwrite
 #' @importFrom fastmap fastmap
 #' @importFrom parallel clusterEvalQ
 #' @importFrom parallel stopCluster
 #' @importFrom txtq txtq
+#' @importFrom utils flush.console
 #' @useDynLib dipsaus, .registration = TRUE
 NULL
 
