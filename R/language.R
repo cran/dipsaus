@@ -307,8 +307,199 @@ no_op <- function(.x, .expr, ..., .check_fun = TRUE){
 
 as_call <- function(..., .list=list(), .drop_nulls = FALSE){
   call <- c(list(...), .list)
+  if('...' %in% names(call)){
+    call[['...']] <- NULL
+    call[[length(call) + 1]] <- quote(...)
+  }
   if (.drop_nulls) {
     call <- call[!vapply(call, is.null, FUN.VALUE = FALSE)]
   }
   as.call(call)
 }
+
+
+#' @name decorate_function
+#' @title Python-style decorator
+#' @param orig,lhs any function
+#' @param decor,rhs decorator function that takes \code{orig} as its first
+#' argument
+#' @param ... passed to \code{decor}
+#' @examples
+#'
+#'
+#' # Example 1: basic usage
+#' # Decorator that prints summary of results and return results itself
+#' verbose_summary <- function(...){
+#'   summary_args <- list(...)
+#'   function(f){
+#'     function(...){
+#'       results <- f(...)
+#'
+#'
+#'       print(do.call(
+#'         summary,
+#'         c(list(results), summary_args)
+#'       ))
+#'       results
+#'
+#'     }
+#'   }
+#'
+#' }
+#'
+#' # runs as.list, but through verbose_summary
+#' as_list2 <- decorate_function(as.list, verbose_summary)
+#'
+#' # run test
+#' res <- as_list2(1:3)  # will verbose summary
+#' identical(res, as.list(1:3))
+#'
+#' # Example 2
+#' x <- 1:20
+#' y <- x + rnorm(20)
+#'
+#' # decorator, add a line with slope 1 with given intercept
+#' abline_xy <- function(b){
+#'   function(f){
+#'     function(...){
+#'       f(...)
+#'       intercept <- get_dots('intercept', 0, ...)
+#'       abline(a = intercept, b = b)
+#'     }
+#'   }
+#' }
+#'
+#' # orig, plot whatever x vs jittered+intercept
+#' plot_xy <- function(x, intercept = rnorm(1)){
+#'   plot(x, jitter(x, amount = 3) + intercept)
+#' }
+#'
+#' # new function that decorate plot_xy with abline_xy, and
+#' # returns the intercept
+#' plot_xy2 <- decorate_function(plot_xy, abline_xy, b = 1)
+#'
+#' # alternatively, you might also want to try
+#' plot_xy2 <- plot_xy %D% abline_xy(b = 1)
+#'
+#' plot_xy2(x = 1:20)
+#'
+#' @export
+decorate_function <- function(orig, decor, ...){
+
+  stopifnot2(is.function(orig) && is.function(decor),
+             msg = 'Decoration orig and decor must be functions')
+  current_call <- match.call()
+  current_call[['orig']] <- NULL
+  current_call[['decor']] <- NULL
+  decor_name <- match.call(decor, call = current_call)
+  decor_name[[1]] <- substitute(decor)
+  re <- decor(...)(orig)
+
+  stopifnot2(is.function(re), msg = 'Decoration must return a function')
+
+  orig_name <- attr(orig, 'dipsaus_decorators')
+  if(is.null(orig_name)){
+    attr(re, 'dipsaus_origin')  <- orig
+  } else {
+    attr(re, 'dipsaus_origin') <- attr(orig, 'dipsaus_origin')
+  }
+  attr(re, 'dipsaus_decorators') <- c(
+    decor_name,
+    orig_name
+  )
+
+  class(re) <- c('dipsaus_decorated', class(re))
+  re
+}
+
+#' @rdname decorate_function
+#' @export
+`%D%` <- function(lhs, rhs){
+  rhs <- substitute(rhs)
+  parent_env <- parent.frame()
+  call <- as_call(decorate_function, orig = lhs, decor = rhs[[1]], .list = as.list(rhs)[-1])
+
+  return(eval(call, envir = parent_env))
+}
+
+#' @export
+print.dipsaus_decorated <- function(x, ...){
+
+  call <- as_call(quote(list), .list = formals(x))
+  call[[1]] <- quote('Decorated function')
+  print(call)
+  calls <- attr(x, 'dipsaus_decorators')
+  cat('- Decorators: \n')
+  for(d in rev(calls)){
+    cat('  ', end = '')
+    print(d)
+  }
+  cat('- Original function:\n')
+  fs <- utils::capture.output(print(attr(x, 'dipsaus_origin')))
+  cat(paste0('  ', fs, collapse = '\n'), end = '\n')
+}
+
+
+#' @title Get element from dots \code{'...'}
+#' @description Get specific key values from \code{'...'} without
+#' evaluating the rest of arguments.
+#' @param ..name character name of the argument
+#' @param ..default R object to return if argument not found
+#' @param ... dots that contains argument
+#' @details One could use \code{list(...)[[name]]} to extract any keys
+#' from the dots. However, such way reduces code readability. If
+#' some arguments have not evaluated, \code{list(...)} will
+#' \code{\link{force}} evaluating them. Normally it's fine if
+#' these expressions take little time to run, but if the
+#' expression require time to run, \code{\link{get_dots}} avoids
+#' unnecessary evaluations.
+#' @examples
+#'
+#'
+#' # ------------------------ Basic Usage ---------------------------
+#' plot2 <- function(...){
+#'   title = get_dots('main', 'There is no title', ...)
+#'   plot(...)
+#'   title
+#' }
+#'
+#' plot2(1:10)
+#' plot2(1:10, main = 'Scatter Plot of 1:10')
+#'
+#' # ------------------------ Comparisons ----------------------------
+#' f1 <- function(...){ get_dots('x', ...) }
+#' f2 <- function(...){ list(...)[['x']] }
+#' delayedAssign('y', { cat('y is evaluated!') })
+#'
+#' # y will not evaluate
+#' f1(x = 1, y = y)
+#'
+#' # y gets evaluated
+#' f2(x = 1, y = y)
+#'
+#' # -------------------- Decorator example --------------------------
+#' ret_range <- function(which_range = 'y'){
+#'   function(f){
+#'     function(...){
+#'       f(...)
+#'       y_range <- range(get_dots(which_range, 0, ...))
+#'       y_range
+#'     }
+#'   }
+#' }
+#' plot_ret_yrange <- plot %D% ret_range('y')
+#' plot_ret_yrange(x = 1:10, y = rnorm(10))
+#'
+#'
+#' @export
+get_dots <- function(..name, ..default = NULL, ...){
+  call <- as.list(match.call(expand.dots = TRUE))[-1]
+  call <- call[!names(call) %in% c('..name', '..default')]
+  if(..name %in% names(call)){
+    idx <- which(names(call) == ..name)[1]
+    return(...elt(idx))
+  }else{
+    return(..default)
+  }
+}
+
