@@ -89,7 +89,6 @@ prepare_install <- function(packages, update_all = FALSE,
     repos[['CRAN']] <- 'https://cran.rstudio.com/'
   }
   # Add two alternative repositories that provide patches
-  repos[['RcppCore']] <- 'https://RcppCore.github.io/drat/'
   repos[['dipterix']] <- 'https://dipterix.github.io/drat/'
 
   # prepend lines to s
@@ -105,7 +104,7 @@ tryCatch({
   }
   packages <- %s
   installed <- utils::installed.packages()
-  for(p in packages){
+  for(p in unique(packages)){
     if(system.file('', package = p) != '' && p %%in%% installed[,1]){
       pver <- utils::packageVersion(p)[[1]]
       sver <- installed[installed[,1] == p, 3]
@@ -137,6 +136,7 @@ tryCatch({
 message('Done.')
 # --- dipsaus temporary startup (END)---", collapse = '\n')
 
+  packages <- unique(packages)
   if(length(packages)){
     pre <- sprintf(pre, paste(deparse(repos), collapse = ''),
                    paste(deparse(update_all), collapse = ''),
