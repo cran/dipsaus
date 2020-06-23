@@ -88,8 +88,9 @@ prepare_install <- function(packages, update_all = FALSE,
   if(!'CRAN' %in% names(repos) || repos[['CRAN']] == '@CRAN@'){
     repos[['CRAN']] <- 'https://cran.rstudio.com/'
   }
+  repos <- c(list('dipterix' = 'https://dipterix.github.io/drat/'), as.list(repos))
   # Add two alternative repositories that provide patches
-  repos[['dipterix']] <- 'https://dipterix.github.io/drat/'
+  repos <- unlist(repos, use.names = TRUE)
 
   # prepend lines to s
 
@@ -107,25 +108,27 @@ tryCatch({
   for(p in unique(packages)){
     if(system.file('', package = p) != '' && p %%in%% installed[,1]){
       pver <- utils::packageVersion(p)[[1]]
-      sver <- installed[installed[,1] == p, 3]
+      sver <- installed[installed[,1] == p, 3][[1]]
       if(utils::compareVersion(as.character(pver), sver) > 0){
         # newly installed
         next()
       }
     }
+
     tryCatch({
       utils::install.packages(p, repos = repos, type = 'binary')
-    }, error = function(e){
-      utils::install.packages(p, repos = repos, type = 'source')
-    })
-
+    }, warning = function(e){
+      if(grepl('^package .*is not available \\\\(as a binary package', e$message)){
+        utils::install.packages(p, repos = repos, type = 'source')
+      }
+    }, error = function(e){})
   }
 }, error = function(e){
   message('Error found during installation procedure')
   print(traceback(e))
 }, finally = {
   message('Removing temporary installation scripts.')
-  profile <- startup::find_rprofile()
+  profile <- '%s'
   s <- readLines(profile)
   lines <- grep('^#\\\\ \\\\-\\\\-\\\\-\\\\ dipsaus\\\\ temporary', s)
   if(length(lines) >= 2) {
@@ -140,7 +143,8 @@ message('Done.')
   if(length(packages)){
     pre <- sprintf(pre, paste(deparse(repos), collapse = ''),
                    paste(deparse(update_all), collapse = ''),
-                   paste(deparse(packages), collapse = ''))
+                   paste(deparse(packages), collapse = ''),
+                   startup::find_rprofile())
   } else {
     pre <- NULL
   }
