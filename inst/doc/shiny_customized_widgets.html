@@ -15,13 +15,29 @@
 
 <title>Shiny Customized Widgets</title>
 
+<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
+// v0.0.1
+// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
+
+document.addEventListener('DOMContentLoaded', function() {
+  const codeList = document.getElementsByClassName("sourceCode");
+  for (var i = 0; i < codeList.length; i++) {
+    var linkList = codeList[i].getElementsByTagName('a');
+    for (var j = 0; j < linkList.length; j++) {
+      if (linkList[j].innerHTML === "") {
+        linkList[j].setAttribute('aria-hidden', 'true');
+      }
+    }
+  }
+});
+</script>
 
 
 <style type="text/css">code{white-space: pre;}</style>
 <style type="text/css" data-origin="pandoc">
-a.sourceLine { display: inline-block; line-height: 1.25; }
-a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
-a.sourceLine:empty { height: 1.2em; }
+code.sourceCode > span { display: inline-block; line-height: 1.25; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode { white-space: pre; position: relative; }
 div.sourceCode { margin: 1em 0; }
@@ -31,14 +47,16 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 code.sourceCode { white-space: pre-wrap; }
-a.sourceLine { text-indent: -1em; padding-left: 1em; }
+code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
-pre.numberSource a.sourceLine
-  { position: relative; left: -4em; }
-pre.numberSource a.sourceLine::before
-  { content: attr(data-line-number);
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
     position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; pointer-events: all; display: inline-block;
+    border: none; display: inline-block;
     -webkit-touch-callout: none; -webkit-user-select: none;
     -khtml-user-select: none; -moz-user-select: none;
     -ms-user-select: none; user-select: none;
@@ -47,9 +65,9 @@ pre.numberSource a.sourceLine::before
   }
 pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
 div.sourceCode
-  {  }
+  {   }
 @media screen {
-a.sourceLine::before { text-decoration: underline; }
+code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 code span.al { color: #ff0000; font-weight: bold; } /* Alert */
 code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
@@ -8308,14 +8326,14 @@ register_set_input( src_Shiny, DEBUG );
 <li>when updating the button, <code>disabled</code> allows to disable/enable the button</li>
 </ul>
 <p>The usage is listed as follows:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"></a>
-<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="co"># UI function</span></a>
-<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="kw">actionButtonStyled</span>(inputId, label, <span class="dt">icon =</span> <span class="ot">NULL</span>, <span class="dt">width =</span> <span class="ot">NULL</span>, </a>
-<a class="sourceLine" id="cb1-4" data-line-number="4">                   <span class="dt">btn_type =</span> <span class="st">&quot;button&quot;</span>, <span class="dt">type =</span> <span class="st">&quot;primary&quot;</span>, <span class="dt">class =</span> <span class="st">&quot;&quot;</span>, ...)</a>
-<a class="sourceLine" id="cb1-5" data-line-number="5"></a>
-<a class="sourceLine" id="cb1-6" data-line-number="6"><span class="co"># Update function</span></a>
-<a class="sourceLine" id="cb1-7" data-line-number="7"><span class="kw">updateActionButtonStyled</span>(session, inputId, <span class="dt">label =</span> <span class="ot">NULL</span>, <span class="dt">icon =</span> <span class="ot">NULL</span>,</a>
-<a class="sourceLine" id="cb1-8" data-line-number="8">                         <span class="dt">type =</span> <span class="ot">NULL</span>, <span class="dt">disabled =</span> <span class="ot">NULL</span>, ...)</a></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a></span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="co"># UI function</span></span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="kw">actionButtonStyled</span>(inputId, label, <span class="dt">icon =</span> <span class="ot">NULL</span>, <span class="dt">width =</span> <span class="ot">NULL</span>, </span>
+<span id="cb1-4"><a href="#cb1-4"></a>                   <span class="dt">btn_type =</span> <span class="st">&quot;button&quot;</span>, <span class="dt">type =</span> <span class="st">&quot;primary&quot;</span>, <span class="dt">class =</span> <span class="st">&quot;&quot;</span>, ...)</span>
+<span id="cb1-5"><a href="#cb1-5"></a></span>
+<span id="cb1-6"><a href="#cb1-6"></a><span class="co"># Update function</span></span>
+<span id="cb1-7"><a href="#cb1-7"></a><span class="kw">updateActionButtonStyled</span>(session, inputId, <span class="dt">label =</span> <span class="ot">NULL</span>, <span class="dt">icon =</span> <span class="ot">NULL</span>,</span>
+<span id="cb1-8"><a href="#cb1-8"></a>                         <span class="dt">type =</span> <span class="ot">NULL</span>, <span class="dt">disabled =</span> <span class="ot">NULL</span>, ...)</span></code></pre></div>
 <p>Show-case:</p>
 <table class="table table-bordered text-center">
 <tbody>
@@ -8523,14 +8541,14 @@ Danger
 <div id="compound-inputs-grouped-inputs" class="section level3">
 <h3>2. Compound Inputs (grouped Inputs)</h3>
 <p><code>compoundInput2</code> provides group inputs where each group contains multiple shiny inputs. For examples</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw">compoundInput2</span>(</a>
-<a class="sourceLine" id="cb2-2" data-line-number="2">  <span class="st">'compound'</span>, <span class="st">'Group Label'</span>, <span class="dt">label_color =</span> <span class="dv">1</span><span class="op">:</span><span class="dv">10</span>,</a>
-<a class="sourceLine" id="cb2-3" data-line-number="3">  <span class="dt">components =</span> <span class="kw">div</span>(</a>
-<a class="sourceLine" id="cb2-4" data-line-number="4">    <span class="kw">textInput</span>(<span class="st">'txt'</span>, <span class="st">'Text'</span>),</a>
-<a class="sourceLine" id="cb2-5" data-line-number="5">    <span class="kw">selectInput</span>(<span class="st">'sel'</span>, <span class="st">'Select'</span>, <span class="dt">choices =</span> <span class="dv">1</span><span class="op">:</span><span class="dv">10</span>, <span class="dt">multiple =</span> <span class="ot">TRUE</span>),</a>
-<a class="sourceLine" id="cb2-6" data-line-number="6">    <span class="kw">sliderInput</span>(<span class="st">'sli'</span>, <span class="st">'Slider'</span>, <span class="dt">max=</span><span class="dv">1</span>, <span class="dt">min=</span><span class="dv">0</span>, <span class="dt">val=</span><span class="fl">0.5</span>)</a>
-<a class="sourceLine" id="cb2-7" data-line-number="7">  ), <span class="dt">max_ncomp =</span> <span class="dv">10</span>, <span class="dt">min_ncomp =</span> <span class="dv">0</span>, <span class="dt">initial_ncomp =</span> <span class="dv">1</span></a>
-<a class="sourceLine" id="cb2-8" data-line-number="8">)</a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="kw">compoundInput2</span>(</span>
+<span id="cb2-2"><a href="#cb2-2"></a>  <span class="st">&#39;compound&#39;</span>, <span class="st">&#39;Group Label&#39;</span>, <span class="dt">label_color =</span> <span class="dv">1</span><span class="op">:</span><span class="dv">10</span>,</span>
+<span id="cb2-3"><a href="#cb2-3"></a>  <span class="dt">components =</span> <span class="kw">div</span>(</span>
+<span id="cb2-4"><a href="#cb2-4"></a>    <span class="kw">textInput</span>(<span class="st">&#39;txt&#39;</span>, <span class="st">&#39;Text&#39;</span>),</span>
+<span id="cb2-5"><a href="#cb2-5"></a>    <span class="kw">selectInput</span>(<span class="st">&#39;sel&#39;</span>, <span class="st">&#39;Select&#39;</span>, <span class="dt">choices =</span> <span class="dv">1</span><span class="op">:</span><span class="dv">10</span>, <span class="dt">multiple =</span> <span class="ot">TRUE</span>),</span>
+<span id="cb2-6"><a href="#cb2-6"></a>    <span class="kw">sliderInput</span>(<span class="st">&#39;sli&#39;</span>, <span class="st">&#39;Slider&#39;</span>, <span class="dt">max=</span><span class="dv">1</span>, <span class="dt">min=</span><span class="dv">0</span>, <span class="dt">val=</span><span class="fl">0.5</span>)</span>
+<span id="cb2-7"><a href="#cb2-7"></a>  ), <span class="dt">max_ncomp =</span> <span class="dv">10</span>, <span class="dt">min_ncomp =</span> <span class="dv">0</span>, <span class="dt">initial_ncomp =</span> <span class="dv">1</span></span>
+<span id="cb2-8"><a href="#cb2-8"></a>)</span></code></pre></div>
 <p>will create a list of input groups with minimum of 0 but maximum of 10. User can control the size of groups by pressing <code>+</code> and <code>-</code> buttons. The value <code>input$components</code> looks like this:</p>
 <pre><code>#&gt; [[1]]
 #&gt; [[1]]$txt
@@ -8545,26 +8563,26 @@ Danger
 #&gt; [[2]]
 ...</code></pre>
 <p>I found this input extremely useful in clinic trial when the experiment condition is grouped and developers don’t know ahead the number of condition groups.</p>
-<p>The further details can be found with <code>demo('example-compountInput2', package='dipsaus')</code>. The source file can be found using <code>system.file('demo/example-compountInput2.R', package='dipsaus')</code>.</p>
+<p>The further details can be found with <code>demo(&#39;example-compountInput2&#39;, package=&#39;dipsaus&#39;)</code>. The source file can be found using <code>system.file(&#39;demo/example-compountInput2.R&#39;, package=&#39;dipsaus&#39;)</code>.</p>
 </div>
 <div id="synchronize-multiple-inputs" class="section level3">
 <h3>3. Synchronize Multiple Inputs</h3>
 <p><code>sync_shiny_inputs</code> provides a way to update among multiple inputs with no dead-locks. For example, input A (<code>textInput</code>) shares the same information as input B (<code>sliderInput</code>). Updating A would trigger B to update. What if you want A to be updated when B is changed? The following code might cause recursive updates:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="co"># Bad example</span></a>
-<a class="sourceLine" id="cb4-2" data-line-number="2"><span class="kw">observeEvent</span>(input<span class="op">$</span>A, {</a>
-<a class="sourceLine" id="cb4-3" data-line-number="3">  <span class="kw">updateSliderInput</span>(session, <span class="st">'B'</span>, <span class="dt">value =</span> input<span class="op">$</span>A)</a>
-<a class="sourceLine" id="cb4-4" data-line-number="4">})</a>
-<a class="sourceLine" id="cb4-5" data-line-number="5"><span class="kw">observeEvent</span>(input<span class="op">$</span>B, {</a>
-<a class="sourceLine" id="cb4-6" data-line-number="6">  <span class="kw">updateTextInput</span>(session, <span class="st">'A'</span>, <span class="dt">value =</span> input<span class="op">$</span>B)</a>
-<a class="sourceLine" id="cb4-7" data-line-number="7">})</a></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="co"># Bad example</span></span>
+<span id="cb4-2"><a href="#cb4-2"></a><span class="kw">observeEvent</span>(input<span class="op">$</span>A, {</span>
+<span id="cb4-3"><a href="#cb4-3"></a>  <span class="kw">updateSliderInput</span>(session, <span class="st">&#39;B&#39;</span>, <span class="dt">value =</span> input<span class="op">$</span>A)</span>
+<span id="cb4-4"><a href="#cb4-4"></a>})</span>
+<span id="cb4-5"><a href="#cb4-5"></a><span class="kw">observeEvent</span>(input<span class="op">$</span>B, {</span>
+<span id="cb4-6"><a href="#cb4-6"></a>  <span class="kw">updateTextInput</span>(session, <span class="st">&#39;A&#39;</span>, <span class="dt">value =</span> input<span class="op">$</span>B)</span>
+<span id="cb4-7"><a href="#cb4-7"></a>})</span></code></pre></div>
 <p>In this case, you can use <code>sync_shiny_inputs</code>:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="kw">sync_shiny_inputs</span>(input, session, <span class="dt">inputIds =</span> <span class="kw">c</span>(<span class="st">'A'</span>, <span class="st">'B'</span>), <span class="dt">uniform =</span> <span class="kw">list</span>(</a>
-<a class="sourceLine" id="cb5-2" data-line-number="2">  <span class="cf">function</span>(a){<span class="kw">as.numeric</span>(a)},</a>
-<a class="sourceLine" id="cb5-3" data-line-number="3">  <span class="cf">function</span>(b){ b }</a>
-<a class="sourceLine" id="cb5-4" data-line-number="4">), <span class="dt">updates =</span> <span class="kw">list</span>(</a>
-<a class="sourceLine" id="cb5-5" data-line-number="5">  <span class="cf">function</span>(a){<span class="kw">updateTextInput</span>(session, <span class="st">'A'</span>, <span class="dt">value =</span> a)},</a>
-<a class="sourceLine" id="cb5-6" data-line-number="6">  <span class="cf">function</span>(b){<span class="kw">updateSliderInput</span>(session, <span class="st">'B'</span>, <span class="dt">value =</span> b)}</a>
-<a class="sourceLine" id="cb5-7" data-line-number="7">))</a></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="kw">sync_shiny_inputs</span>(input, session, <span class="dt">inputIds =</span> <span class="kw">c</span>(<span class="st">&#39;A&#39;</span>, <span class="st">&#39;B&#39;</span>), <span class="dt">uniform =</span> <span class="kw">list</span>(</span>
+<span id="cb5-2"><a href="#cb5-2"></a>  <span class="cf">function</span>(a){<span class="kw">as.numeric</span>(a)},</span>
+<span id="cb5-3"><a href="#cb5-3"></a>  <span class="cf">function</span>(b){ b }</span>
+<span id="cb5-4"><a href="#cb5-4"></a>), <span class="dt">updates =</span> <span class="kw">list</span>(</span>
+<span id="cb5-5"><a href="#cb5-5"></a>  <span class="cf">function</span>(a){<span class="kw">updateTextInput</span>(session, <span class="st">&#39;A&#39;</span>, <span class="dt">value =</span> a)},</span>
+<span id="cb5-6"><a href="#cb5-6"></a>  <span class="cf">function</span>(b){<span class="kw">updateSliderInput</span>(session, <span class="st">&#39;B&#39;</span>, <span class="dt">value =</span> b)}</span>
+<span id="cb5-7"><a href="#cb5-7"></a>))</span></code></pre></div>
 <p><code>inputIds</code> refers to the input ID to be synchronized. When one or more of the inputs are changed, the value will be passed to the corresponding <code>uniform</code> functions and stored, then <code>updates</code> will notify each inputs to update the UI values. The input of <code>updates</code> is the stored value.</p>
 <p>For example, if input <code>A</code> is changed from <code>&quot;0&quot;</code> to <code>&quot;1&quot;</code>, then the first function of <code>uniform</code> is triggered, <code>function(a){as.numeric(a)}</code> will be evaluated with <code>a=&quot;1&quot;</code>. The result, which is numeric <code>1</code> will be stored. Next, each functions in <code>updates</code> will be called, with <code>1</code> (stored in the previous step) as input, results in changing the slider input <code>B</code> to <code>1</code>. This whole process will not trigger <code>A</code> to re-update.</p>
 </div>

@@ -303,7 +303,11 @@ mem_limit2 <- function(){
 #' @title Ask and Return True or False from the Terminal
 #' @description Ask a question and read from the terminal in interactive scenario
 #' @param ...,end,level passed to \code{\link[dipsaus]{cat2}}
-#' @param error_if_canceled raise error if canceled.
+#' @param error_if_canceled raise error if canceled
+#' @param use_rs whether to use \code{rstudioapi} if possible
+#' @param ok button label for yes
+#' @param cancel button label for no
+#' @param rs_title message title if 'RStudio' question box pops up.
 #' @seealso \code{\link[dipsaus]{cat2}}, \code{\link[base]{readline}},
 #' \code{\link[dipsaus]{ask_or_default}}
 #'
@@ -325,20 +329,31 @@ mem_limit2 <- function(){
 #' ask_yesno('Can I pass the CRAN check this time?')
 #' }
 #' @export
-ask_yesno <- function(..., end = '', level = 'INFO', error_if_canceled = TRUE){
-  cat2(..., ' (Yes/no): ', end = end, level = level)
-  answer <- readline()
-  answer <- stringr::str_trim(stringr::str_to_upper(answer))
-  if( answer %in% c('Y', 'YES') ){ return(TRUE) }
-  if( answer %in% c('N', 'NO') ){ return(FALSE) }
-  if( answer %in% c('C') ){
-    if( error_if_canceled ){
-      cat2('Canceled.', level = 'FATAL')
-    }else{
-      return(NULL)
+ask_yesno <- function(..., end = '', level = 'INFO', error_if_canceled = TRUE,
+                      use_rs = TRUE, ok = 'Yes', cancel = 'No',
+                      rs_title = 'Yes or No:'){
+
+  if(use_rs && rs_avail()){
+    s <- paste(..., sep = '\n')
+    res <- rstudioapi::showQuestion(rs_title, s, ok = ok, cancel = cancel)
+    return(isTRUE(res))
+  } else {
+    cat2(..., ' (Yes/no): ', end = end, level = level)
+    answer <- readline()
+    answer <- stringr::str_trim(stringr::str_to_upper(answer))
+    if( answer %in% c('Y', 'YES') ){ return(TRUE) }
+    if( answer %in% c('N', 'NO') ){ return(FALSE) }
+    if( answer %in% c('C') ){
+      if( error_if_canceled ){
+        cat2('Canceled.', level = 'FATAL')
+      }else{
+        return(NULL)
+      }
     }
+    Recall('Please answer Y/yes, N/no, or c to cancel.', end = '', level = 'WARNING', error_if_canceled = error_if_canceled)
   }
-  Recall('Please answer Y/yes, N/no, or c to cancel.', end = '', level = 'WARNING')
+
+
 }
 
 
@@ -364,15 +379,108 @@ ask_yesno <- function(..., end = '', level = 'INFO', error_if_canceled = TRUE){
 #' }
 #' @export
 ask_or_default <- function(..., default = '', end = '', level = 'INFO'){
-  cat2(..., sprintf('\n  [default is %s] ', sQuote(default)),
-       end = end, level = level)
-  answer <- stringr::str_trim(readline())
-  if( answer == '' ){
-    answer <- default
+
+  if(rs_avail()){
+    answer <- rstudioapi::showPrompt('Question', paste(..., sep = '\n'), default = default)
+    if(!length(answer) || answer == ''){
+      answer <- default
+    }
+  } else {
+    cat2(..., sprintf('\n  [default is %s] ', sQuote(default)),
+         end = end, level = level)
+    answer <- stringr::str_trim(readline())
+    if( answer == '' ){
+      answer <- default
+    }
   }
   answer
+
 }
 
 
 
 
+#' Print Directory Tree
+#' @param target target directory path, relative to \code{root}
+#' @param root root directory, default is \code{'~'}
+#' @param child child files in target; is missing, then list all files
+#' @param dir_only whether to display directory children only
+#' @param collapse whether to concatenate results as one single string
+#' @param ... pass to \code{\link[base]{list.files}} when list all files
+#' @return Characters, print-friendly directory tree.
+#' @export
+print_directory_tree <- function(target, root = '~', child, dir_only = FALSE,
+                                 collapse = NULL, ...){
+  root <- normalizePath(root, winslash = '/', mustWork = FALSE)
+  target <- file.path(root, target)
+  target <- stringr::str_replace_all(target, '\\\\', '/')
+  target <- normalizePath(target, mustWork = FALSE, winslash = '/')
+
+  paths <- stringr::str_split(target, '\\\\|/', simplify = TRUE)
+  rpath <- stringr::str_split(root, '\\\\|/', simplify = TRUE)
+
+  tree_id <- cbind(paste(rpath, collapse = '/'), paths[, -seq_along(rpath)])
+
+  df <- list('...' = character(0))
+
+  for(i in seq_len(nrow(tree_id))){
+
+    if(i == 1){
+      if( missing(child) ){
+        # child is only for the first target
+        dir <- target[[i]]
+        if( dir.exists(dir) ){
+          child <- list.dirs(dir, full.names = FALSE, recursive = FALSE)
+          if(!dir_only){
+            child <- c(child, list.files(dir, full.names = FALSE, include.dirs = FALSE, ...))
+          }
+          df[child] <- lapply(child, function(o){ character(0) })
+        } else {
+          child <- '...'
+        }
+      } else if(!length(child)){
+        child <- character(0)
+      } else {
+        df[child] <- lapply(child, function(o){ character(0) })
+      }
+    } else {
+      child <- '...'
+    }
+
+    x <- c(as.list(tree_id[i, ]), list(child), list(''))
+    Reduce(function(a,b){
+      if(a != '' && length(a) == 1){
+        df[[a]] <<- c(df[[a]], b)
+      }
+      b
+    }, x)
+  }
+
+  res <- cli::tree(data.frame(names(df), I(unname(lapply(df, function(x){
+    x <- x[x!='']
+    if(!length(x)){
+      x <- character(0)
+    }else {
+      x <- unique(x)
+    }
+    x
+  })))), root = root)
+  if(length(collapse) == 1){
+    res <- paste(res, collapse = collapse)
+  }
+  res
+}
+
+#' Captures Evaluation Output of Expressions as One Single String
+#' @description Evaluate expression and captures output as characters, then
+#' concatenate as one single string.
+#' @param expr R expression
+#' @param collapse character to concatenate outputs
+#' @param type passed to \code{\link[utils]{capture.output}}
+#' @return Character of length 1: output captured by
+#' \code{\link[utils]{capture.output}}
+#' @export
+capture_expr <- function(expr, collapse = '\n', type = c("output", "message")){
+  invisible(paste(utils::capture.output(expr, type = type),
+                  collapse = collapse))
+}

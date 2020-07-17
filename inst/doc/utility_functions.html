@@ -15,13 +15,29 @@
 
 <title>Utility Functions</title>
 
+<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
+// v0.0.1
+// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
+
+document.addEventListener('DOMContentLoaded', function() {
+  const codeList = document.getElementsByClassName("sourceCode");
+  for (var i = 0; i < codeList.length; i++) {
+    var linkList = codeList[i].getElementsByTagName('a');
+    for (var j = 0; j < linkList.length; j++) {
+      if (linkList[j].innerHTML === "") {
+        linkList[j].setAttribute('aria-hidden', 'true');
+      }
+    }
+  }
+});
+</script>
 
 
 <style type="text/css">code{white-space: pre;}</style>
 <style type="text/css" data-origin="pandoc">
-a.sourceLine { display: inline-block; line-height: 1.25; }
-a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
-a.sourceLine:empty { height: 1.2em; }
+code.sourceCode > span { display: inline-block; line-height: 1.25; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode { white-space: pre; position: relative; }
 div.sourceCode { margin: 1em 0; }
@@ -31,14 +47,16 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 code.sourceCode { white-space: pre-wrap; }
-a.sourceLine { text-indent: -1em; padding-left: 1em; }
+code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
-pre.numberSource a.sourceLine
-  { position: relative; left: -4em; }
-pre.numberSource a.sourceLine::before
-  { content: attr(data-line-number);
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
     position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; pointer-events: all; display: inline-block;
+    border: none; display: inline-block;
     -webkit-touch-callout: none; -webkit-user-select: none;
     -khtml-user-select: none; -moz-user-select: none;
     -ms-user-select: none; user-select: none;
@@ -47,9 +65,9 @@ pre.numberSource a.sourceLine::before
   }
 pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
 div.sourceCode
-  {  }
+  {   }
 @media screen {
-a.sourceLine::before { text-decoration: underline; }
+code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 code span.al { color: #ff0000; font-weight: bold; } /* Alert */
 code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
@@ -303,89 +321,89 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">library</span>(dipsaus)</a></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">library</span>(dipsaus)</span></code></pre></div>
 <div id="cat-strings-with-levels-debug-info-warning-error-and-fatal" class="section level4">
 <h4>1. Cat strings with levels: <code>DEBUG</code>, <code>INFO</code>, <code>WARNING</code>, <code>ERROR</code>, and <code>FATAL</code></h4>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw">cat2</span>(<span class="st">'Debug passed!'</span>, <span class="dt">level =</span> <span class="st">'DEBUG'</span>)</a>
-<a class="sourceLine" id="cb2-2" data-line-number="2"><span class="co">#&gt; ✔ Debug passed!</span></a>
-<a class="sourceLine" id="cb2-3" data-line-number="3"></a>
-<a class="sourceLine" id="cb2-4" data-line-number="4"><span class="kw">cat2</span>(<span class="st">'You are all set.'</span>, <span class="dt">level =</span> <span class="st">'INFO'</span>)</a>
-<a class="sourceLine" id="cb2-5" data-line-number="5"><span class="co">#&gt; ♥ You are all set.</span></a>
-<a class="sourceLine" id="cb2-6" data-line-number="6"></a>
-<a class="sourceLine" id="cb2-7" data-line-number="7"><span class="kw">cat2</span>(<span class="st">'Wait a second...'</span>, <span class="dt">level =</span> <span class="st">'WARNING'</span>)</a>
-<a class="sourceLine" id="cb2-8" data-line-number="8"><span class="co">#&gt; ⚠ Wait a second...</span></a>
-<a class="sourceLine" id="cb2-9" data-line-number="9"></a>
-<a class="sourceLine" id="cb2-10" data-line-number="10"><span class="kw">cat2</span>(<span class="st">'Ooops'</span>, <span class="dt">level =</span> <span class="st">'ERROR'</span>)</a>
-<a class="sourceLine" id="cb2-11" data-line-number="11"><span class="co">#&gt; ✖ Ooops</span></a>
-<a class="sourceLine" id="cb2-12" data-line-number="12"></a>
-<a class="sourceLine" id="cb2-13" data-line-number="13"><span class="kw">cat2</span>(<span class="st">'Bi--Doop---'</span>, <span class="dt">level =</span> <span class="st">'FATAL'</span>)</a>
-<a class="sourceLine" id="cb2-14" data-line-number="14"><span class="co">#&gt; ✖ Bi--Doop---</span></a>
-<a class="sourceLine" id="cb2-15" data-line-number="15"><span class="co">#&gt; Error: </span></a>
-<a class="sourceLine" id="cb2-16" data-line-number="16"><span class="co">#&gt; ...</span></a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="kw">cat2</span>(<span class="st">&#39;Debug passed!&#39;</span>, <span class="dt">level =</span> <span class="st">&#39;DEBUG&#39;</span>)</span>
+<span id="cb2-2"><a href="#cb2-2"></a><span class="co">#&gt; ✔ Debug passed!</span></span>
+<span id="cb2-3"><a href="#cb2-3"></a></span>
+<span id="cb2-4"><a href="#cb2-4"></a><span class="kw">cat2</span>(<span class="st">&#39;You are all set.&#39;</span>, <span class="dt">level =</span> <span class="st">&#39;INFO&#39;</span>)</span>
+<span id="cb2-5"><a href="#cb2-5"></a><span class="co">#&gt; ♥ You are all set.</span></span>
+<span id="cb2-6"><a href="#cb2-6"></a></span>
+<span id="cb2-7"><a href="#cb2-7"></a><span class="kw">cat2</span>(<span class="st">&#39;Wait a second...&#39;</span>, <span class="dt">level =</span> <span class="st">&#39;WARNING&#39;</span>)</span>
+<span id="cb2-8"><a href="#cb2-8"></a><span class="co">#&gt; ⚠ Wait a second...</span></span>
+<span id="cb2-9"><a href="#cb2-9"></a></span>
+<span id="cb2-10"><a href="#cb2-10"></a><span class="kw">cat2</span>(<span class="st">&#39;Ooops&#39;</span>, <span class="dt">level =</span> <span class="st">&#39;ERROR&#39;</span>)</span>
+<span id="cb2-11"><a href="#cb2-11"></a><span class="co">#&gt; ✖ Ooops</span></span>
+<span id="cb2-12"><a href="#cb2-12"></a></span>
+<span id="cb2-13"><a href="#cb2-13"></a><span class="kw">cat2</span>(<span class="st">&#39;Bi--Doop---&#39;</span>, <span class="dt">level =</span> <span class="st">&#39;FATAL&#39;</span>)</span>
+<span id="cb2-14"><a href="#cb2-14"></a><span class="co">#&gt; ✖ Bi--Doop---</span></span>
+<span id="cb2-15"><a href="#cb2-15"></a><span class="co">#&gt; Error: </span></span>
+<span id="cb2-16"><a href="#cb2-16"></a><span class="co">#&gt; ...</span></span></code></pre></div>
 <p><em>Level <code>FATAL</code> will raise errors.</em></p>
 </div>
 <div id="parse_svec-and-deparse_svec" class="section level4">
 <h4>2. <code>parse_svec</code> and <code>deparse_svec</code></h4>
 <p><code>parse_svec</code> converts characters like <code>&quot;7-10,14-15&quot;</code> to numeric vectors</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="kw">parse_svec</span>(<span class="st">&quot;7-10,14-15&quot;</span>)</a>
-<a class="sourceLine" id="cb3-2" data-line-number="2"><span class="co">#&gt; [1]  7  8  9 10 14 15</span></a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="kw">parse_svec</span>(<span class="st">&quot;7-10,14-15&quot;</span>)</span>
+<span id="cb3-2"><a href="#cb3-2"></a><span class="co">#&gt; [1]  7  8  9 10 14 15</span></span></code></pre></div>
 <p><code>deparse_svec</code> reverse the process</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="kw">deparse_svec</span>(<span class="kw">c</span>(<span class="dv">2</span>,<span class="dv">5</span>,<span class="dv">3</span>,<span class="dv">1</span>,<span class="dv">7</span>))</a>
-<a class="sourceLine" id="cb4-2" data-line-number="2"><span class="co">#&gt; [1] &quot;1-3,5,7&quot;</span></a></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="kw">deparse_svec</span>(<span class="kw">c</span>(<span class="dv">2</span>,<span class="dv">5</span>,<span class="dv">3</span>,<span class="dv">1</span>,<span class="dv">7</span>))</span>
+<span id="cb4-2"><a href="#cb4-2"></a><span class="co">#&gt; [1] &quot;1-3,5,7&quot;</span></span></code></pre></div>
 <p>Parameter <code>max_lag</code> in <code>deparse_svec</code> changes the threshold of integers collapsed together:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="kw">deparse_svec</span>(<span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">7</span>,<span class="dv">11</span>))</a>
-<a class="sourceLine" id="cb5-2" data-line-number="2"><span class="co">#&gt; [1] &quot;1-2,4,7,11&quot;</span></a>
-<a class="sourceLine" id="cb5-3" data-line-number="3"></a>
-<a class="sourceLine" id="cb5-4" data-line-number="4"><span class="kw">deparse_svec</span>(<span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">7</span>,<span class="dv">11</span>), <span class="dt">max_lag =</span> <span class="dv">2</span>)</a>
-<a class="sourceLine" id="cb5-5" data-line-number="5"><span class="co">#&gt; [1] &quot;1-4,7,11&quot;</span></a>
-<a class="sourceLine" id="cb5-6" data-line-number="6"></a>
-<a class="sourceLine" id="cb5-7" data-line-number="7"><span class="kw">deparse_svec</span>(<span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">7</span>,<span class="dv">11</span>), <span class="dt">max_lag =</span> <span class="dv">3</span>)</a>
-<a class="sourceLine" id="cb5-8" data-line-number="8"><span class="co">#&gt; [1] &quot;1-7,11&quot;</span></a></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="kw">deparse_svec</span>(<span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">7</span>,<span class="dv">11</span>))</span>
+<span id="cb5-2"><a href="#cb5-2"></a><span class="co">#&gt; [1] &quot;1-2,4,7,11&quot;</span></span>
+<span id="cb5-3"><a href="#cb5-3"></a></span>
+<span id="cb5-4"><a href="#cb5-4"></a><span class="kw">deparse_svec</span>(<span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">7</span>,<span class="dv">11</span>), <span class="dt">max_lag =</span> <span class="dv">2</span>)</span>
+<span id="cb5-5"><a href="#cb5-5"></a><span class="co">#&gt; [1] &quot;1-4,7,11&quot;</span></span>
+<span id="cb5-6"><a href="#cb5-6"></a></span>
+<span id="cb5-7"><a href="#cb5-7"></a><span class="kw">deparse_svec</span>(<span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">7</span>,<span class="dv">11</span>), <span class="dt">max_lag =</span> <span class="dv">3</span>)</span>
+<span id="cb5-8"><a href="#cb5-8"></a><span class="co">#&gt; [1] &quot;1-7,11&quot;</span></span></code></pre></div>
 </div>
 <div id="system-information" class="section level4">
 <h4>3. System Information</h4>
 <p>The goal is to work as an alternative to retrieve system information. For example, R doesn’t provide functions to get memory limits, or CPU chip-set information on Linux or MacOS.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="co"># Most of the CPU Chipset and vendor</span></a>
-<a class="sourceLine" id="cb6-2" data-line-number="2"><span class="kw">get_cpu</span>()</a>
-<a class="sourceLine" id="cb6-3" data-line-number="3"><span class="co">#&gt; $vendor_id</span></a>
-<a class="sourceLine" id="cb6-4" data-line-number="4"><span class="co">#&gt; [1] &quot;GenuineIntel&quot;</span></a>
-<a class="sourceLine" id="cb6-5" data-line-number="5"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb6-6" data-line-number="6"><span class="co">#&gt; $model_name</span></a>
-<a class="sourceLine" id="cb6-7" data-line-number="7"><span class="co">#&gt; [1] &quot;Intel(R) Core(TM) i7-7700HQ CPU @ 2.80GHz&quot;</span></a>
-<a class="sourceLine" id="cb6-8" data-line-number="8"></a>
-<a class="sourceLine" id="cb6-9" data-line-number="9"><span class="co"># Total RAM in bytes</span></a>
-<a class="sourceLine" id="cb6-10" data-line-number="10"><span class="kw">get_ram</span>()</a>
-<a class="sourceLine" id="cb6-11" data-line-number="11"><span class="co">#&gt; [1] 17179869184</span></a>
-<a class="sourceLine" id="cb6-12" data-line-number="12"></a>
-<a class="sourceLine" id="cb6-13" data-line-number="13"><span class="co"># Print-friendly</span></a>
-<a class="sourceLine" id="cb6-14" data-line-number="14"><span class="kw">to_ram_size</span>(<span class="kw">get_ram</span>(), <span class="dv">1024</span>)</a>
-<a class="sourceLine" id="cb6-15" data-line-number="15"><span class="co">#&gt; 16.0 GB</span></a>
-<a class="sourceLine" id="cb6-16" data-line-number="16"></a>
-<a class="sourceLine" id="cb6-17" data-line-number="17"><span class="co"># </span><span class="al">WARNING</span><span class="co">: $free is the total RAM - R usage, is no the actual free RAM</span></a>
-<a class="sourceLine" id="cb6-18" data-line-number="18"><span class="kw">mem_limit2</span>()</a>
-<a class="sourceLine" id="cb6-19" data-line-number="19"><span class="co">#&gt; $total</span></a>
-<a class="sourceLine" id="cb6-20" data-line-number="20"><span class="co">#&gt; [1] 17179869184</span></a>
-<a class="sourceLine" id="cb6-21" data-line-number="21"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb6-22" data-line-number="22"><span class="co">#&gt; $free</span></a>
-<a class="sourceLine" id="cb6-23" data-line-number="23"><span class="co">#&gt; [1] 17131513328</span></a></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="co"># Most of the CPU Chipset and vendor</span></span>
+<span id="cb6-2"><a href="#cb6-2"></a><span class="kw">get_cpu</span>()</span>
+<span id="cb6-3"><a href="#cb6-3"></a><span class="co">#&gt; $vendor_id</span></span>
+<span id="cb6-4"><a href="#cb6-4"></a><span class="co">#&gt; [1] &quot;GenuineIntel&quot;</span></span>
+<span id="cb6-5"><a href="#cb6-5"></a><span class="co">#&gt; </span></span>
+<span id="cb6-6"><a href="#cb6-6"></a><span class="co">#&gt; $model_name</span></span>
+<span id="cb6-7"><a href="#cb6-7"></a><span class="co">#&gt; [1] &quot;Intel(R) Core(TM) i5-7600K CPU @ 3.80GHz&quot;</span></span>
+<span id="cb6-8"><a href="#cb6-8"></a></span>
+<span id="cb6-9"><a href="#cb6-9"></a><span class="co"># Total RAM in bytes</span></span>
+<span id="cb6-10"><a href="#cb6-10"></a><span class="kw">get_ram</span>()</span>
+<span id="cb6-11"><a href="#cb6-11"></a><span class="co">#&gt; [1] 68719476736</span></span>
+<span id="cb6-12"><a href="#cb6-12"></a></span>
+<span id="cb6-13"><a href="#cb6-13"></a><span class="co"># Print-friendly</span></span>
+<span id="cb6-14"><a href="#cb6-14"></a><span class="kw">to_ram_size</span>(<span class="kw">get_ram</span>(), <span class="dv">1024</span>)</span>
+<span id="cb6-15"><a href="#cb6-15"></a><span class="co">#&gt; 64.0 GB</span></span>
+<span id="cb6-16"><a href="#cb6-16"></a></span>
+<span id="cb6-17"><a href="#cb6-17"></a><span class="co"># </span><span class="al">WARNING</span><span class="co">: $free is the total RAM - R usage, is no the actual free RAM</span></span>
+<span id="cb6-18"><a href="#cb6-18"></a><span class="kw">mem_limit2</span>()</span>
+<span id="cb6-19"><a href="#cb6-19"></a><span class="co">#&gt; $total</span></span>
+<span id="cb6-20"><a href="#cb6-20"></a><span class="co">#&gt; [1] 68719476736</span></span>
+<span id="cb6-21"><a href="#cb6-21"></a><span class="co">#&gt; </span></span>
+<span id="cb6-22"><a href="#cb6-22"></a><span class="co">#&gt; $free</span></span>
+<span id="cb6-23"><a href="#cb6-23"></a><span class="co">#&gt; [1] 68670811032</span></span></code></pre></div>
 </div>
 <div id="interactive-questions" class="section level4">
 <h4>4. Interactive Questions</h4>
 <p><code>askYesNo</code> comes with <code>utils</code> package allows to ask yes/no questions and returns logical value. If <code>cancel</code> is entered, then the function returns <code>NA</code>, if answers other than <code>yes</code>, <code>no</code> or <code>cancel</code> is given, it raise an error. <code>dipsaus::ask_yesno</code> will ask the question again and again until the user actually say <code>yes</code> or <code>no</code></p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="op">&gt;</span><span class="st"> </span><span class="kw">ask_yesno</span>(<span class="st">'Please answer an yes/no question, ok?'</span>)</a>
-<a class="sourceLine" id="cb7-2" data-line-number="2"><span class="co">## ♥ Please answer an yes/no question, ok? (Yes/no): </span></a>
-<a class="sourceLine" id="cb7-3" data-line-number="3"><span class="op">&gt;</span><span class="st"> </span>qweee</a>
-<a class="sourceLine" id="cb7-4" data-line-number="4"><span class="co">## ⚠ Please answer Y/yes, N/no, or c to cancel. (Yes/no): </span></a>
-<a class="sourceLine" id="cb7-5" data-line-number="5"><span class="op">&gt;</span><span class="st"> </span>ttt</a>
-<a class="sourceLine" id="cb7-6" data-line-number="6"><span class="co">## ⚠ Please answer Y/yes, N/no, or c to cancel. (Yes/no): </span></a>
-<a class="sourceLine" id="cb7-7" data-line-number="7"><span class="op">&gt;</span><span class="st"> </span>y</a>
-<a class="sourceLine" id="cb7-8" data-line-number="8"><span class="co">## [1] TRUE</span></a></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="op">&gt;</span><span class="st"> </span><span class="kw">ask_yesno</span>(<span class="st">&#39;Please answer an yes/no question, ok?&#39;</span>)</span>
+<span id="cb7-2"><a href="#cb7-2"></a><span class="co">## ♥ Please answer an yes/no question, ok? (Yes/no): </span></span>
+<span id="cb7-3"><a href="#cb7-3"></a><span class="op">&gt;</span><span class="st"> </span>qweee</span>
+<span id="cb7-4"><a href="#cb7-4"></a><span class="co">## ⚠ Please answer Y/yes, N/no, or c to cancel. (Yes/no): </span></span>
+<span id="cb7-5"><a href="#cb7-5"></a><span class="op">&gt;</span><span class="st"> </span>ttt</span>
+<span id="cb7-6"><a href="#cb7-6"></a><span class="co">## ⚠ Please answer Y/yes, N/no, or c to cancel. (Yes/no): </span></span>
+<span id="cb7-7"><a href="#cb7-7"></a><span class="op">&gt;</span><span class="st"> </span>y</span>
+<span id="cb7-8"><a href="#cb7-8"></a><span class="co">## [1] TRUE</span></span></code></pre></div>
 <p><code>ask_or_default</code> instead of asking a yes/no question, it asks a question with default answer. User don’t have to type the answers if the they accept defaults:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="op">&gt;</span><span class="st"> </span><span class="kw">ask_or_default</span>(<span class="st">&quot;What is your password&quot;</span>, <span class="dt">default =</span> <span class="st">'I will not tell you!'</span>)</a>
-<a class="sourceLine" id="cb8-2" data-line-number="2"><span class="co">## ♥ What is your password</span></a>
-<a class="sourceLine" id="cb8-3" data-line-number="3"><span class="co">##   [default is ‘I will not tell you!’] </span></a>
-<a class="sourceLine" id="cb8-4" data-line-number="4"><span class="op">&gt;</span></a>
-<a class="sourceLine" id="cb8-5" data-line-number="5"><span class="co">## [1] &quot;I will not tell you!&quot;</span></a></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="op">&gt;</span><span class="st"> </span><span class="kw">ask_or_default</span>(<span class="st">&quot;What is your password&quot;</span>, <span class="dt">default =</span> <span class="st">&#39;I will not tell you!&#39;</span>)</span>
+<span id="cb8-2"><a href="#cb8-2"></a><span class="co">## ♥ What is your password</span></span>
+<span id="cb8-3"><a href="#cb8-3"></a><span class="co">##   [default is ‘I will not tell you!’] </span></span>
+<span id="cb8-4"><a href="#cb8-4"></a><span class="op">&gt;</span></span>
+<span id="cb8-5"><a href="#cb8-5"></a><span class="co">## [1] &quot;I will not tell you!&quot;</span></span></code></pre></div>
 </div>
 
 
