@@ -15,8 +15,11 @@ rs_exec(expr, name = "Untitled", quoted = FALSE, rs = TRUE, wait = FALSE)
 
 \item{rs}{whether to use 'RStudio' by default}
 
-\item{wait}{whether to wait for the result. Only useful when using
-\code{Rscript}}
+\item{wait}{whether to wait for the result.}
+}
+\value{
+If \code{wait=TRUE}, returns evaluation results of \code{expr},
+otherwise a function that can track the state of job.
 }
 \description{
 Utilizes 'RStudio' job scheduler if correct environment is

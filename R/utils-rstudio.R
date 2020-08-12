@@ -56,6 +56,13 @@ rs_runjob_alt <- function(script, name, wait = TRUE){
   if(length(rscript) != 1){
     stop("Cannot find Rscript or Rscript.exe... You might want to use RStudio?")
   }
+  # inject to load base packages
+  sinfo <- utils::sessionInfo()
+  s <- readLines(script)
+  s <- c(
+    paste0('library(', rev(sinfo$basePkgs), ')'),
+    s
+  )
 
   cmd <- sprintf("%s --vanilla %s", rscript, script)
   system(cmd, wait = wait)
@@ -69,8 +76,9 @@ rs_runjob_alt <- function(script, name, wait = TRUE){
 #' @param name used by 'RStudio' as name of the job
 #' @param quoted is \code{expr} quoted
 #' @param rs whether to use 'RStudio' by default
-#' @param wait whether to wait for the result. Only useful when using
-#' \code{Rscript}
+#' @param wait whether to wait for the result.
+#' @return If \code{wait=TRUE}, returns evaluation results of \code{expr},
+#' otherwise a function that can track the state of job.
 #'
 #' @details
 #' 'RStudio' provides interfaces \code{\link[rstudioapi]{jobRunScript}} to
@@ -97,14 +105,115 @@ rs_exec <- function(expr, name = 'Untitled', quoted = FALSE, rs = TRUE, wait = F
   if(!quoted){
     expr <- substitute(expr)
   }
+  tempdir(check = TRUE)
   script <- tempfile()
-  writeLines(deparse(expr), script, sep = '\n')
+  state_file <- paste0(script, '.dstate')
+  res_file <- paste0(script, '.res')
+
+  # 1: initializing
+  writeLines('1', state_file)
+  state_file <- normalizePath(state_file)
+
+  expr <- rlang::quo({
+    # 2: started
+    writeLines('2', !!state_file)
+    local({
+      ...msg... <- new.env(parent = emptyenv())
+      reg.finalizer(...msg..., function(e){
+        grDevices::graphics.off()
+        if(length(e$error)){
+          writeLines(c('-1', e$error), !!state_file)
+        } else {
+          writeLines('0', !!state_file)
+        }
+      }, onexit = TRUE)
+
+      ...msg...$fun <- function(){
+        !!expr
+      }
+
+      tryCatch({
+        res <- ...msg...$fun()
+
+        if(!is.null(res)){
+          saveRDS(res, file = !!res_file)
+        }
+
+        writeLines('0', !!state_file)
+
+      }, error = function(e){
+        ...msg...$error <- e$message
+        writeLines(c('-1', ...msg...$error), !!state_file)
+      }, finally = {
+        rm(...msg...)
+        gc()
+      })
+
+    })
+  })
+  writeLines(deparse(rlang::quo_squash(expr)), script, sep = '\n')
 
   if(rs && rs_avail()){
     rs_runjob(script, name)
   } else {
     rs_runjob_alt(script, name, wait = wait)
   }
+
+  # returns a function checking states
+  state <- 0
+  res <- NULL
+
+  check_f <- function(){
+    # This function can track the rs_exec process
+    if(file.exists(state_file)){
+      s <- readLines(state_file)
+      s <- stringr::str_trim(s)
+      st <- as.integer(s[[1]])
+      if(is.na(st)){
+        # unknown results
+        st <- -2
+      } else {
+        s <- s[-1]
+      }
+      if(st < 0){
+        unlink(script)
+        unlink(state_file)
+        attr(st, 'rs_exec_error') <- s
+        attr(st, 'rs_exec_state') <- 'Error'
+      } else if(st == 0){
+        unlink(script)
+        unlink(state_file)
+        if(file.exists(res_file)){
+          res <<- readRDS(res_file)
+        }
+        unlink(res_file)
+        attr(st, 'rs_exec_state') <- 'Success'
+        attr(st, 'rs_exec_result') <- res
+      } else if(st > 0){
+        attr(st, 'rs_exec_state') <- 'Running'
+      }
+      state <<- st
+    }
+    return(structure(state, class = 'dipsaus_rs_exec_res'))
+  }
+
+  if(wait){
+    check_f <- check_f()
+  }
+  invisible(check_f)
+}
+
+#' @export
+print.dipsaus_rs_exec_res <- function(x, ...){
+  cat('Code :', as.numeric(x), '\n')
+  cat('State:', attr(x, 'rs_exec_state'), '\n')
+  if(x < 0){
+    cat('Error:\n')
+    print(attr(x, 'rs_exec_error'))
+  } else if(x==0){
+    cat('Please use `attr(x, "rs_exec_result")` to get the results.')
+  }
+  invisible(x)
 }
 
 rs_install_r <- function(packages, repos = getOption('repos'),
@@ -343,7 +452,7 @@ rs_install_github <- function(packages, repos = getOption('repos'),
     cat('Done\n')
   })
 
-  rs_exec(rlang::quo_squash(quo), quoted = TRUE, name = 'Install packages', rs = rs)
+  rs_exec(rlang::quo_squash(quo), quoted = TRUE, name = 'Install packages', rs = rs, wait = TRUE)
 
   invisible()
 }
