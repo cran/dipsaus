@@ -1,7 +1,7 @@
 Package: dipsaus
 Type: Package
 Title: A Dipping Sauce for Data Analysis and Visualizations
-Version: 0.1.1
+Version: 0.1.2
 Authors@R: c(
     person("Zhengjia", "Wang", email = "zhengjia.wang@rice.edu", role = c("aut", "cre"))
     )
@@ -35,8 +35,8 @@ RoxygenNote: 7.1.1
 LinkingTo: Rcpp, RcppParallel
 VignetteBuilder: knitr
 NeedsCompilation: yes
-Packaged: 2020-10-09 06:24:21 UTC; beauchamplab
+Packaged: 2021-01-09 01:07:06 UTC; beauchamplab
 Author: Zhengjia Wang [aut, cre]
 Maintainer: Zhengjia Wang <zhengjia.wang@rice.edu>
 Repository: CRAN
-Date/Publication: 2020-10-09 07:50:02 UTC
+Date/Publication: 2021-01-10 05:10:09 UTC
