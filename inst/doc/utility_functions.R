@@ -39,9 +39,6 @@ deparse_svec(c(1,2,4,7,11), max_lag = 2)
 deparse_svec(c(1,2,4,7,11), max_lag = 3)
 
 ## -----------------------------------------------------------------------------
-# Most of the CPU Chipset and vendor
-get_cpu()
-
 # Total RAM in bytes
 get_ram()
 

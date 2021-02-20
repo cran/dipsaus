@@ -31,45 +31,6 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 </script>
-<style type="text/css">
-a.anchor-section {margin-left: 10px; visibility: hidden; color: inherit;}
-a.anchor-section::before {content: '#';}
-.hasAnchor:hover a.anchor-section {visibility: visible;}
-</style>
-<script>// Anchor sections v1.0 written by Atsushi Yasumoto on Oct 3rd, 2020.
-document.addEventListener('DOMContentLoaded', function() {
-  // Do nothing if AnchorJS is used
-  if (typeof window.anchors === 'object' && anchors.hasOwnProperty('hasAnchorJSLink')) {
-    return;
-  }
-
-  const h = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
-
-  // Do nothing if sections are already anchored
-  if (Array.from(h).some(x => x.classList.contains('hasAnchor'))) {
-    return null;
-  }
-
-  // Use section id when pandoc runs with --section-divs
-  const section_id = function(x) {
-    return ((x.classList.contains('section') || (x.tagName === 'SECTION'))
-            ? x.id : '');
-  };
-
-  // Add anchors
-  h.forEach(function(x) {
-    const id = x.id || section_id(x.parentElement);
-    if (id === '') {
-      return null;
-    }
-    let anchor = document.createElement('a');
-    anchor.href = '#' + id;
-    anchor.classList = ['anchor-section'];
-    x.classList.add('hasAnchor');
-    x.appendChild(anchor);
-  });
-});
-</script>
 
 <style type="text/css">
   code{white-space: pre-wrap;}
@@ -169,6 +130,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   }
 })();
 </script>
+
 
 
 
@@ -411,29 +373,20 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <div id="system-information" class="section level4">
 <h4>3. System Information</h4>
 <p>The goal is to work as an alternative to retrieve system information. For example, R doesn’t provide functions to get memory limits, or CPU chip-set information on Linux or MacOS.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="co"># Most of the CPU Chipset and vendor</span></span>
-<span id="cb6-2"><a href="#cb6-2"></a><span class="kw">get_cpu</span>()</span>
-<span id="cb6-3"><a href="#cb6-3"></a><span class="co">#&gt; $vendor_id</span></span>
-<span id="cb6-4"><a href="#cb6-4"></a><span class="co">#&gt; [1] &quot;GenuineIntel&quot;</span></span>
-<span id="cb6-5"><a href="#cb6-5"></a><span class="co">#&gt; </span></span>
-<span id="cb6-6"><a href="#cb6-6"></a><span class="co">#&gt; $model_name</span></span>
-<span id="cb6-7"><a href="#cb6-7"></a><span class="co">#&gt; [1] &quot;Intel(R) Core(TM) i7-7700HQ CPU @ 2.80GHz&quot;</span></span>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="co"># Total RAM in bytes</span></span>
+<span id="cb6-2"><a href="#cb6-2"></a><span class="kw">get_ram</span>()</span>
+<span id="cb6-3"><a href="#cb6-3"></a><span class="co">#&gt; 17179869184.0 B</span></span>
+<span id="cb6-4"><a href="#cb6-4"></a></span>
+<span id="cb6-5"><a href="#cb6-5"></a><span class="co"># Print-friendly</span></span>
+<span id="cb6-6"><a href="#cb6-6"></a><span class="kw">to_ram_size</span>(<span class="kw">get_ram</span>(), <span class="dv">1024</span>)</span>
+<span id="cb6-7"><a href="#cb6-7"></a><span class="co">#&gt; 16.0 GB</span></span>
 <span id="cb6-8"><a href="#cb6-8"></a></span>
-<span id="cb6-9"><a href="#cb6-9"></a><span class="co"># Total RAM in bytes</span></span>
-<span id="cb6-10"><a href="#cb6-10"></a><span class="kw">get_ram</span>()</span>
-<span id="cb6-11"><a href="#cb6-11"></a><span class="co">#&gt; [1] 17179869184</span></span>
-<span id="cb6-12"><a href="#cb6-12"></a></span>
-<span id="cb6-13"><a href="#cb6-13"></a><span class="co"># Print-friendly</span></span>
-<span id="cb6-14"><a href="#cb6-14"></a><span class="kw">to_ram_size</span>(<span class="kw">get_ram</span>(), <span class="dv">1024</span>)</span>
-<span id="cb6-15"><a href="#cb6-15"></a><span class="co">#&gt; 16.0 GB</span></span>
-<span id="cb6-16"><a href="#cb6-16"></a></span>
-<span id="cb6-17"><a href="#cb6-17"></a><span class="co"># </span><span class="al">WARNING</span><span class="co">: $free is the total RAM - R usage, is no the actual free RAM</span></span>
-<span id="cb6-18"><a href="#cb6-18"></a><span class="kw">mem_limit2</span>()</span>
-<span id="cb6-19"><a href="#cb6-19"></a><span class="co">#&gt; $total</span></span>
-<span id="cb6-20"><a href="#cb6-20"></a><span class="co">#&gt; [1] 17179869184</span></span>
-<span id="cb6-21"><a href="#cb6-21"></a><span class="co">#&gt; </span></span>
-<span id="cb6-22"><a href="#cb6-22"></a><span class="co">#&gt; $free</span></span>
-<span id="cb6-23"><a href="#cb6-23"></a><span class="co">#&gt; [1] 17131159200</span></span></code></pre></div>
+<span id="cb6-9"><a href="#cb6-9"></a><span class="co"># </span><span class="al">WARNING</span><span class="co">: $free is the total RAM - R usage, is no the actual free RAM</span></span>
+<span id="cb6-10"><a href="#cb6-10"></a><span class="kw">mem_limit2</span>()</span>
+<span id="cb6-11"><a href="#cb6-11"></a><span class="co">#&gt; $total</span></span>
+<span id="cb6-12"><a href="#cb6-12"></a><span class="co">#&gt; 17179869184.0 B</span></span>
+<span id="cb6-13"><a href="#cb6-13"></a><span class="co">#&gt; $free</span></span>
+<span id="cb6-14"><a href="#cb6-14"></a><span class="co">#&gt; 17131187864.0 B</span></span></code></pre></div>
 </div>
 <div id="interactive-questions" class="section level4">
 <h4>4. Interactive Questions</h4>
