@@ -22,20 +22,30 @@ rs_avail <- function(version_needed = '1.3', child_ok = FALSE, shiny_ok = FALSE)
 }
 
 #' Focus on 'RStudio' Console
-#' @description Safe wrap of \code{\link[rstudioapi]{sendToConsole}}
+#' @description Focus on coding; works with 'RStudio' (\code{>=1.4})
+#' @param wait wait in seconds before sending command; if too soon, then
+#' 'RStudio' might not be able to react.
 #' @return None
 #' @export
-rs_focus_console <- function(){
-  if(rs_avail()){
-    rstudioapi::sendToConsole('', focus = TRUE, execute = FALSE, echo = TRUE)
+rs_focus_console <- function(wait = 0.5){
+  if(rs_avail(version_needed = '1.4')){
+    if(wait > 0){
+      Sys.sleep(wait)
+    }
+    try({
+      rstudioapi::executeCommand("activateConsole", quiet = TRUE)
+    }, silent = TRUE)
   }
-  return()
+  return(invisible())
 }
 
-rs_runjob <- function(script, name){
+rs_runjob <- function(script, name, focus_on_console = FALSE){
   rstudioapi::jobRunScript(path = script, name = name,
                            workingDir = tempdir(),
                            importEnv = NULL, exportEnv = "")
+  if(focus_on_console){
+    rs_focus_console()
+  }
   return()
 }
 
@@ -78,6 +88,9 @@ rs_runjob_alt <- function(script, name, wait = TRUE){
 #' @param rs whether to use 'RStudio' by default
 #' @param wait whether to wait for the result.
 #' @param packages packages to load in the sub-sessions
+#' @param focus_on_console whether to return back to console after creating
+#' jobs; useful when users want to focus on writing code; default is false.
+#' This feature works with 'RStudio' (\code{>=1.4})
 #' @return If \code{wait=TRUE}, returns evaluation results of \code{expr},
 #' otherwise a function that can track the state of job.
 #'
@@ -103,7 +116,7 @@ rs_runjob_alt <- function(script, name, wait = TRUE){
 #'
 #' @export
 rs_exec <- function(expr, name = 'Untitled', quoted = FALSE, rs = TRUE,
-                    wait = FALSE, packages = NULL){
+                    wait = FALSE, packages = NULL, focus_on_console = FALSE){
   if(!quoted){
     expr <- substitute(expr)
   }
@@ -164,7 +177,11 @@ rs_exec <- function(expr, name = 'Untitled', quoted = FALSE, rs = TRUE,
   writeLines(deparse(rlang::quo_squash(expr)), script, sep = '\n')
 
   if(rs && rs_avail()){
-    rs_runjob(script, name)
+    if(wait){
+      rs_runjob(script, name, focus_on_console = FALSE)
+    } else {
+      rs_runjob(script, name, focus_on_console = focus_on_console)
+    }
   } else {
     rs_runjob_alt(script, name, wait = wait)
   }
@@ -199,6 +216,10 @@ rs_exec <- function(expr, name = 'Untitled', quoted = FALSE, rs = TRUE,
         unlink(res_file)
         attr(st, 'rs_exec_state') <- 'Success'
         attr(st, 'rs_exec_result') <- res
+        # return to console
+        if(focus_on_console){
+          rs_focus_console(wait = 0)
+        }
       } else if(st > 0){
         attr(st, 'rs_exec_state') <- 'Running'
       }
@@ -208,6 +229,11 @@ rs_exec <- function(expr, name = 'Untitled', quoted = FALSE, rs = TRUE,
   }
 
   if(wait){
+    check_f()
+    while(isTRUE(state > 0)){
+      check_f()
+      Sys.sleep(0.5)
+    }
     check_f <- check_f()
   }
   invisible(check_f)

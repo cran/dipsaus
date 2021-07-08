@@ -1,9 +1,9 @@
 Package: dipsaus
 Type: Package
 Title: A Dipping Sauce for Data Analysis and Visualizations
-Version: 0.1.5
+Version: 0.1.6
 Authors@R: c(
-    person("Zhengjia", "Wang", email = "zhengjia.wang@rice.edu", role = c("aut", "cre"))
+    person("Zhengjia", "Wang", email = "dipterix.wang@gmail.com", role = c("aut", "cre"))
     )
 Description: Works as an "add-on" to packages like 'shiny', 'future', as well as 
     'rlang', and provides utility functions. Just like dipping sauce adding 
@@ -21,7 +21,6 @@ URL: https://github.com/dipterix/dipsaus
 BugReports: https://github.com/dipterix/dipsaus/issues
 License: GPL-3
 Encoding: UTF-8
-LazyData: true
 Language: en-US
 Depends: R (>= 3.5.0)
 Imports: utils, grDevices, parallel, Rcpp, RcppParallel, R6, shiny,
@@ -36,8 +35,8 @@ RoxygenNote: 7.1.1
 LinkingTo: Rcpp, RcppParallel
 VignetteBuilder: knitr
 NeedsCompilation: yes
-Packaged: 2021-02-19 02:10:11 UTC; beauchamplab
+Packaged: 2021-07-08 19:59:10 UTC; dipterix
 Author: Zhengjia Wang [aut, cre]
-Maintainer: Zhengjia Wang <zhengjia.wang@rice.edu>
+Maintainer: Zhengjia Wang <dipterix.wang@gmail.com>
 Repository: CRAN
-Date/Publication: 2021-02-20 05:50:16 UTC
+Date/Publication: 2021-07-08 21:50:05 UTC

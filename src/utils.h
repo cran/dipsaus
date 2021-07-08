@@ -47,4 +47,8 @@ double add_square(const double e1, const double e2);
 
 std::string object_address(SEXP x);
 
+SEXP sumsquared(SEXP &x);
+SEXPTYPE get_sexp_type(const SEXP &x);
+SEXP set_dim(SEXP &x, SEXP &dim);
+
 #endif

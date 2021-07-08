@@ -4,11 +4,15 @@
 \alias{rs_focus_console}
 \title{Focus on 'RStudio' Console}
 \usage{
-rs_focus_console()
+rs_focus_console(wait = 0.5)
+}
+\arguments{
+\item{wait}{wait in seconds before sending command; if too soon, then
+'RStudio' might not be able to react.}
 }
 \value{
 None
 }
 \description{
-Safe wrap of \code{\link[rstudioapi]{sendToConsole}}
+Focus on coding; works with 'RStudio' (\code{>=1.4})
 }
