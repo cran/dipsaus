@@ -444,6 +444,164 @@ no_op <- function(.x, .expr, ..., .check_fun = TRUE){
   invisible(.x)
 }
 
+
+#' Convert functions to pipe-friendly functions
+#' @param x R object as input
+#' @param ... default arguments explicitly display in the returned function
+#' @param call a function call, or the function itself
+#' @param arg_name argument name to be varied. This argument will be the first
+#' argument in the new function so it's pipe-friendly.
+#' @param .name new argument name; default is the same as \code{arg_name}
+#' @param .env executing environment
+#' @param .quoted whether \code{call} has been quoted
+#' @return If \code{x} is missing, returns a function that takes one argument,
+#' otherwise run the function with given \code{x}
+#' @examples
+#'
+#' # modify a function call
+#' vary_title <- as_pipe(call = plot(1:10, 1:10),
+#'                       pch = 16,
+#'                       arg_name = 'main',
+#'                       .name = 'title')
+#' vary_title
+#'
+#' # vary_title is pipe-friendly with `pch` default 16
+#' vary_title(title = 'My Title')
+#'
+#' # `pch` is explicit
+#' vary_title(title = 'My Title', pch = 1)
+#'
+#' # other variables are implicit
+#' vary_title(title = 'My Title', type = 'l')
+#'
+#'
+#' # modify a function
+#'
+#' f <- function(b = 1, x){ b + x }
+#' f_pipable <- as_pipe(call = f, arg_name = 'x')
+#' f_pipable
+#'
+#' f_pipable(2)
+#'
+#' # Advanced use
+#'
+#' # Set option dipsaus.debug.as_pipe=TRUE to debug
+#' options("dipsaus.debug.as_pipe" = TRUE)
+#'
+#' # Both `.(z)` and `z` work
+#'
+#' image2 <- as_pipe(call = image(
+#'   x = seq(0, 1, length.out = nrow(z)),
+#'   y = 1:ncol(z),
+#'   z = matrix(1:16, 4),
+#'   xlab = "Time", ylab = "Freq",
+#'   main = "Debug"
+#' ), arg_name = 'z')
+#'
+#' # main can be overwritten
+#' image2(matrix(1:50, 5), main = "Production")
+#'
+#'
+#' # reset debug option
+#' options("dipsaus.debug.as_pipe" = FALSE)
+#'
+#'
+#' @export
+as_pipe <- function(x, ..., call, arg_name,
+                    .name = arg_name,
+                    .env = parent.frame(),
+                    .quoted = FALSE){
+
+
+  stopifnot(is.character(arg_name))
+  if(!.quoted){
+    call <- substitute(call)
+  }
+  call <- as.list(call)
+
+  if( call[[1]] == 'function'){
+    # call is a function
+    call <- list(as.call(list(quote(`(`), as.call(call))))
+  }
+  call <- match_calls(call, quoted = TRUE, envir = .env, recursive = FALSE)
+
+  if(!'...' %in% call){
+    call[[length(call) + 1]] <- quote(...)
+  }
+  dot_args <- list(...)
+  dot_args <- dot_args[!names(dot_args) %in% '']
+  if(length(dot_args)){
+    for(nm in names(dot_args)){
+      call[[nm]] <- str2lang(nm)
+    }
+  }
+  call <- as.call(call)
+
+  f <- new_function2(c(
+    structure(alist(x=, y=), names = c(.name, "...")),
+    dot_args
+  ), bquote({
+
+    # remove duplicated ...
+    dots <- as.list(match.call(expand.dots = FALSE))[["..."]]
+    dots <- dots[!names(dots) %in% '']
+    call <- as.list(bquote(.( call )))
+    if(length(dots)){
+      for(nm in names(dots)){
+        call[[nm]] <- NULL
+      }
+    }
+    call[[.(arg_name)]] <- quote(.(str2lang(.name)))
+    eval(as.call(call))
+  }), quote_type = 'quote', env = .env)
+
+  call_ <- call
+  call_[[arg_name]] <- sprintf("[input:%s]", .name)
+  attr(f, "call") <- call_
+  class(f) <- c("f_pipe", "function")
+
+  if( !missing(x) ){
+    print(x)
+    return(f(x))
+  } else {
+    if(getOption("dipsaus.debug.as_pipe", FALSE)){
+      e <- local({
+        tryCatch({
+          call <- as.list(call)
+          call <- call[call != "..."]
+          call <- as.call(call)
+          .input <- eval(call[[arg_name]], envir = list(), enclos = .env)
+          f(.input)
+          NULL
+        }, error = function(e){
+          e
+        })
+      })
+      if(is.null(e)){
+        e <- 'options("dipsaus.debug.as_pipe") is set to TRUE. This should be used only in debug mode. Do not use for production!'
+        message(e)
+      } else {
+        warning(e, immediate. = TRUE, call. = FALSE)
+      }
+
+    }
+
+
+    return(f)
+
+  }
+
+}
+
+#' @export
+print.f_pipe <- function(x, ...){
+  cat("<Pipe-compatible function>\n")
+  print(dipsaus::new_function2(formals(x), bquote({
+    .(attr(x, "call"))
+  }), quote_type = "quote"))
+  invisible(x)
+}
+
 #' Plus-minus operator
 #' @param a,b numeric vectors, matrices or arrays
 #' @return \code{a +/- b}, the dimension depends on \code{a+b}. If \code{a+b} is
@@ -612,23 +770,30 @@ print.dipsaus_decorated <- function(x, ...){
 }
 
 
-#' @title Get element from dots \code{'...'}
-#' @description Get specific key values from \code{'...'} without
-#' evaluating the rest of arguments.
+#' @title Get or check elements from dots \code{'...'}
+#' @description Get information from \code{'...'} without
+#' evaluating the arguments.
+#' @param envir R environment
 #' @param ..name character name of the argument
 #' @param ..default R object to return if argument not found
 #' @param ... dots that contains argument
-#' @details One could use \code{list(...)[[name]]} to extract any keys
-#' from the dots. However, such way reduces code readability. If
-#' some arguments have not evaluated, \code{list(...)} will
-#' \code{\link{force}} evaluating them. Normally it's fine if
-#' these expressions take little time to run, but if the
-#' expression require time to run, \code{\link{get_dots}} avoids
-#' unnecessary evaluations.
+#'
+#' @return \code{missing_dots} returns logical vector with lengths matching
+#' with dot lengths. \code{get_dots} returns value corresponding to the name.
+#'
 #' @examples
 #'
 #'
 #' # ------------------------ Basic Usage ---------------------------
+#'
+#' # missing_dots(environment()) is a fixed usage
+#'
+#' my_function <- function(...){
+#'   missing_dots(environment())
+#' }
+#' my_function(,)
+#'
+#' # get_dots
 #' plot2 <- function(...){
 #'   title = get_dots('main', 'There is no title', ...)
 #'   plot(...)
@@ -675,6 +840,14 @@ get_dots <- function(..name, ..default = NULL, ...){
   }
 }
 
+#' @rdname get_dots
+#' @export
+missing_dots <- function(envir = parent.frame()){
+  if(!is.environment(envir)){
+    stop("missing_dots: `envir` must be an environment")
+  }
+  check_missing_dots(envir)
+}
 
 #' Test whether function has certain arguments
 #' @param fun function
