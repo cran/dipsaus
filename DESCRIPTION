@@ -1,7 +1,7 @@
 Package: dipsaus
 Type: Package
 Title: A Dipping Sauce for Data Analysis and Visualizations
-Version: 0.1.8
+Version: 0.1.9
 Authors@R: c(
     person("Zhengjia", "Wang", email = "dipterix.wang@gmail.com", role = c("aut", "cre"))
     )
@@ -23,19 +23,19 @@ License: GPL-3
 Encoding: UTF-8
 Language: en-US
 Depends: R (>= 3.5.0)
-Imports: utils, grDevices, parallel, Rcpp, RcppParallel, R6, shiny,
-        cli, stringr, jsonlite (>= 1.6), future, future.apply,
+Imports: utils, graphics, grDevices, parallel, Rcpp, RcppParallel, R6,
+        shiny, cli, stringr, jsonlite (>= 1.6), future, future.apply,
         progressr, fastmap (>= 1.1.0), base64url, base64enc,
         synchronicity, digest, rlang (>= 0.4.0), startup, rstudioapi
         (>= 0.11)
 Suggests: knitr, rmarkdown, testthat, microbenchmark, magrittr, yaml,
         future.callr, remotes, glue
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 LinkingTo: Rcpp, RcppParallel
 VignetteBuilder: knitr
 NeedsCompilation: yes
-Packaged: 2021-09-06 11:27:32 UTC; dipterix
+Packaged: 2021-10-13 16:32:31 UTC; dipterix
 Author: Zhengjia Wang [aut, cre]
 Maintainer: Zhengjia Wang <dipterix.wang@gmail.com>
 Repository: CRAN
-Date/Publication: 2021-09-06 11:50:02 UTC
+Date/Publication: 2021-10-13 16:52:04 UTC
