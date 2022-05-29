@@ -86,7 +86,7 @@ progress2 <- function( title, max = 1, ..., quiet = FALSE,
       if(is.function(log)){
         log(...)
       }else{
-        cat2(..., level=level, bullet=bullet)
+        cat2(..., level=level, bullet=bullet, end = "\r", append = TRUE)
       }
     }
   }
@@ -103,7 +103,7 @@ progress2 <- function( title, max = 1, ..., quiet = FALSE,
       # if message is updated
       if(!is.null(message) && length(message) == 1){ title <<- message }
       current <<- amount + current
-      logger(sprintf("[%s]: %s (%d out of %d)", title, detail, current, max),
+      logger(sprintf("[%s]: %s (%d out of %d)", title, detail, round(current), ceiling(max)),
            level = 'DEFAULT', bullet = 'arrow_right', .quiet = quiet)
     }
 
@@ -122,6 +122,10 @@ progress2 <- function( title, max = 1, ..., quiet = FALSE,
       if(!is.null(message) && length(message) == 1){ title <<- message }
       current <<- current + amount
       progress$inc(detail = detail, message = title, amount = amount)
+      if(is.function(log)){
+        logger(sprintf("[%s]: %s (%d out of %d)", title, detail, round(current), ceiling(max)),
+               level = 'DEFAULT', bullet = 'arrow_right', .quiet = quiet)
+      }
     }
     close <- function(message = 'Finished'){
       if(!closed){
