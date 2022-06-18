@@ -1,3 +1,20 @@
+dipsaus 0.2.3 (In Development)
+
+dipsaus 0.2.2
+=======
+
+## Major Changes
+* Added a special `%OF%` to make sure the result is constrained
+
+## Minor Changes
+
+* Replaced some functions from `stringr` to self-implemented base-R functions, plan to remove `stringr` in the future
+* Create `shiny_input_bindings` list on package load
+
+## Bug Fixes
+
+* Fixed `print_directory_tree` where an `if` condition generates warning for vectors with lengths greater than `1`
+
 dipsaus 0.2.1
 =======
 
