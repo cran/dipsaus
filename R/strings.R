@@ -69,6 +69,10 @@ parse_svec <- function(text, sep = ',', connect = '-:|', sort = FALSE, unique = 
   connect[connect %in% c('|', ':')] <- paste0('\\', connect[connect %in% c('|', ':')])
   connect <- paste(connect, collapse = '')
 
+  if(length(text) != 1) {
+    text <- paste(text, collapse = sep)
+  }
+
 
   if(length(text) == 0 || stringr::str_trim(text) == ''){
     return(NULL)
@@ -131,14 +135,13 @@ deparse_svec <- function(nums, connect = '-', concatenate = TRUE, collapse = ','
   ind <- nums - lg
   ind[1] <- 0
   ind2 <- c(ind[-1], -1)
-  apply(cbind(nums[!ind %in% alag], nums[!ind2 %in% alag]), 1,function(x){
+  re <- apply(cbind(nums[!ind %in% alag], nums[!ind2 %in% alag]), 1,function(x){
     if(x[1] == x[2]){
       stringr::str_c(x[1])
     }else{
       stringr::str_c(x, collapse = connect)
     }
-  }) ->
-    re
+  })
   if(concatenate){
     re <- stringr::str_c(re, collapse = collapse)
   }

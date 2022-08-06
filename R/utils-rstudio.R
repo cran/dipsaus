@@ -95,6 +95,8 @@ rs_runjob_alt <- function(script, name, wait = TRUE,
 #' @param focus_on_console whether to return back to console after creating
 #' jobs; useful when users want to focus on writing code; default is false.
 #' This feature works with 'RStudio' (\code{>=1.4})
+#' @param nested_ok whether nested \code{rs_exec} is allowed; default is false;
+#' Set to true to allow nested parallel code, but use at your own risk.
 #' @param ... internally used
 #' @return If \code{wait=TRUE}, returns evaluation results of \code{expr},
 #' otherwise a function that can track the state of job.
@@ -142,8 +144,8 @@ rs_runjob_alt <- function(script, name, wait = TRUE,
 #' @export
 rs_exec <- function(expr, name = 'Untitled', quoted = FALSE, rs = TRUE,
                     wait = FALSE, packages = NULL, focus_on_console = FALSE,
-                    ...){
-  if(!is_master()) {
+                    ..., nested_ok = FALSE){
+  if(!nested_ok && !is_master()) {
     stop("Function `rs_exec`, `lapply_callr` should not be nested.")
   }
   if(!quoted){
@@ -160,7 +162,7 @@ rs_exec <- function(expr, name = 'Untitled', quoted = FALSE, rs = TRUE,
 
   session_id <- .master_session_id()
 
-  use_rs <- rs && rs_avail()
+  use_rs <- rs && rs_avail(child_ok = TRUE, shiny_ok = TRUE)
 
   expr <- rlang::quo({
     # 2: started
@@ -613,3 +615,34 @@ rs_save_all <- function(){
   warning('RStudio version too low, please update RStudio')
 }
 
+#' @title Use 'RStudio' to open and edit files
+#' @param path path to file
+#' @param create whether to create if path is not found; default is true
+#' @return Opens the file pointing to \code{path} to edit, and returns the
+#' path
+#' @export
+rs_edit_file <- function(path, create = TRUE) {
+  if(!interactive()) {
+    warning("`rs_edit_file`: must run in interactive mode")
+    return(path)
+  }
+  if(!file.exists(path)) {
+    if(!create) {
+      stop("`rs_edit_file`: File path not exists, cannot open: ", path)
+    }
+    root <- dirname(path)
+    if(!dir.exists(root)) {
+      dir.create(root, showWarnings = FALSE, recursive = TRUE)
+    }
+    file.create(path)
+  }
+
+  path <- normalizePath(path, mustWork = TRUE)
+
+  if(rs_avail() && rstudioapi::hasFun("navigateToFile")) {
+    rstudioapi::navigateToFile(path)
+  } else {
+    utils::file.edit(path)
+  }
+  invisible(path)
+}
