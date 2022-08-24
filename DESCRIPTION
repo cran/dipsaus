@@ -1,7 +1,7 @@
 Package: dipsaus
 Type: Package
 Title: A Dipping Sauce for Data Analysis and Visualizations
-Version: 0.2.3
+Version: 0.2.4
 Authors@R: c(
     person("Zhengjia", "Wang", email = "dipterix.wang@gmail.com", role = c("aut", "cre")),
     person("John", "Magnotti", email = "John.Magnotti@pennmedicine.upenn.edu", role = c("ctb"),
@@ -38,10 +38,10 @@ RoxygenNote: 7.2.1
 LinkingTo: Rcpp, RcppParallel
 VignetteBuilder: knitr
 NeedsCompilation: yes
-Packaged: 2022-08-06 15:55:57 UTC; dipterix
+Packaged: 2022-08-24 01:57:15 UTC; dipterix
 Author: Zhengjia Wang [aut, cre],
   John Magnotti [ctb] (Contributed to `rutabaga.R`),
   Xiang Zhang [ctb] (Contributed to `rutabaga.R`)
 Maintainer: Zhengjia Wang <dipterix.wang@gmail.com>
 Repository: CRAN
-Date/Publication: 2022-08-06 17:00:10 UTC
+Date/Publication: 2022-08-24 07:00:10 UTC
