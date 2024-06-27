@@ -386,7 +386,7 @@ eval_dirty <- function(expr, env = parent.frame(), data = NULL, quoted = TRUE){
 
   nms <- sapply(seq_along(args), function(ii){
     nm <- names(args[ii])
-    if(is.null(nm) || stringr::str_trim(nm) == ''){
+    if(is.null(nm) || trimws(nm) == ''){
       nm <- args[[ii]]
       args[[ii]] <<- .missing_arg[[1]]
     }
@@ -914,4 +914,42 @@ test_farg <- function(fun, arg, dots = TRUE){
   } else {
     arg <= length(fm)
   }
+}
+
+
+#' Check whether a function, environment comes from a namespace
+#' @description
+#' A coarse way to find if a function comes from a package.
+#'
+#' @param x function, environment, language (with environment attached)
+#' @param recursive whether to recursively search parent environments
+#' @returns logical true if \code{x} or its environment is
+#' defined in a namespace; returns false if the object is atomic, or defined
+#' in/from global environment, or an empty environment.
+#' @examples
+#'
+#'
+#' is_from_namespace(baseenv())        # TRUE
+#' is_from_namespace(utils::read.csv)  # TRUE
+#'
+#' x <- function(){}
+#' is_from_namespace(NULL)             # FALSE
+#' is_from_namespace(x)                # FALSE
+#' is_from_namespace(emptyenv())       # FALSE
+#'
+#' # Let environment of `x` be base environment
+#' # (exception case)
+#' environment(x) <- baseenv()
+#' is_from_namespace(x)        # TRUE
+#'
+#'
+#' @export
+is_from_namespace <- function(x, recursive = TRUE) {
+  if(is.null(x)) { return(FALSE) }
+  if( recursive ) {
+    recursive <- TRUE
+  } else {
+    recursive <- FALSE
+  }
+  return( is_env_from_package(x, recursive) )
 }

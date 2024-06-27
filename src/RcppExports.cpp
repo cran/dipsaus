@@ -155,6 +155,29 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// is_namespace
+bool is_namespace(SEXP& rho);
+RcppExport SEXP _dipsaus_is_namespace(SEXP rhoSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP& >::type rho(rhoSEXP);
+    rcpp_result_gen = Rcpp::wrap(is_namespace(rho));
+    return rcpp_result_gen;
+END_RCPP
+}
+// is_env_from_package
+bool is_env_from_package(SEXP& x, const bool& recursive);
+RcppExport SEXP _dipsaus_is_env_from_package(SEXP xSEXP, SEXP recursiveSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP& >::type x(xSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type recursive(recursiveSEXP);
+    rcpp_result_gen = Rcpp::wrap(is_env_from_package(x, recursive));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_dipsaus_cpp_forelse", (DL_FUNC) &_dipsaus_cpp_forelse, 3},
@@ -168,6 +191,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dipsaus_sumsquared", (DL_FUNC) &_dipsaus_sumsquared, 1},
     {"_dipsaus_get_sexp_type", (DL_FUNC) &_dipsaus_get_sexp_type, 1},
     {"_dipsaus_set_dim", (DL_FUNC) &_dipsaus_set_dim, 2},
+    {"_dipsaus_is_namespace", (DL_FUNC) &_dipsaus_is_namespace, 1},
+    {"_dipsaus_is_env_from_package", (DL_FUNC) &_dipsaus_is_env_from_package, 2},
     {NULL, NULL, 0}
 };
 

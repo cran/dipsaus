@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
@@ -7,7 +7,7 @@ knitr::opts_chunk$set(
 ## ----setup--------------------------------------------------------------------
 library(dipsaus)
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 #  cat2('Debug passed!', level = 'DEBUG')
 #  #> ✔ Debug passed!
 #  
@@ -48,7 +48,7 @@ to_ram_size(get_ram(), 1024)
 # WARNING: $free is the total RAM - R usage, is no the actual free RAM
 mem_limit2()
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 #  > ask_yesno('Please answer an yes/no question, ok?')
 #  ## ♥ Please answer an yes/no question, ok? (Yes/no):
 #  > qweee
@@ -58,7 +58,7 @@ mem_limit2()
 #  > y
 #  ## [1] TRUE
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 #  > ask_or_default("What is your password", default = 'I will not tell you!')
 #  ## ♥ What is your password
 #  ##   [default is ‘I will not tell you!’]

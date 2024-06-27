@@ -45,3 +45,11 @@ set_dim <- function(x, dim) {
     .Call(`_dipsaus_set_dim`, x, dim)
 }
 
+is_namespace <- function(rho) {
+    .Call(`_dipsaus_is_namespace`, rho)
+}
+
+is_env_from_package <- function(x, recursive) {
+    .Call(`_dipsaus_is_env_from_package`, x, recursive)
+}
+

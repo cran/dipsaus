@@ -1,4 +1,4 @@
-## ---- include = FALSE, echo=FALSE---------------------------------------------
+## ----include = FALSE, echo=FALSE----------------------------------------------
 
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -10,7 +10,7 @@ knitr::opts_chunk$set(
 library(shiny)
 library(dipsaus)
 
-## ---- results='asis', echo=FALSE----------------------------------------------
+## ----results='asis', echo=FALSE-----------------------------------------------
 shiny::includeCSS(system.file('www/shared/bootstrap/css/bootstrap.min.css', 
                               package = 'shiny'))
 shiny::includeCSS(system.file('rmarkdown/templates/html_vignette/resources/vignette.css', 
@@ -18,7 +18,7 @@ shiny::includeCSS(system.file('rmarkdown/templates/html_vignette/resources/vigne
 shiny::includeCSS(system.file('shiny-addons/dipsaus/dipsaus-dipterix-lib.js', 
                               package = 'dipsaus'))
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 #  
 #  # UI function
 #  actionButtonStyled(inputId, label, icon = NULL, width = NULL,
@@ -28,7 +28,7 @@ shiny::includeCSS(system.file('shiny-addons/dipsaus/dipsaus-dipterix-lib.js',
 #  updateActionButtonStyled(session, inputId, label = NULL, icon = NULL,
 #                           type = NULL, disabled = NULL, ...)
 
-## ---- results='asis', echo=FALSE----------------------------------------------
+## ----results='asis', echo=FALSE-----------------------------------------------
 
 btypes <- c('default', 'primary', 'info', 'success', 'warning', 'danger')
 btypes <- rbind(btypes, stringr::str_to_title(btypes))
@@ -81,7 +81,7 @@ tags$table(
 
 
 
-## ---- eval=FALSE--------------------------------------------------------------
+## ----eval=FALSE---------------------------------------------------------------
 #  compoundInput2(
 #    'compound', 'Group Label', label_color = 1:10,
 #    components = div(
@@ -91,7 +91,7 @@ tags$table(
 #    ), max_ncomp = 10, min_ncomp = 0, initial_ncomp = 1
 #  )
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  # Bad example
 #  observeEvent(input$A, {
 #    updateSliderInput(session, 'B', value = input$A)
@@ -100,7 +100,7 @@ tags$table(
 #    updateTextInput(session, 'A', value = input$B)
 #  })
 
-## ---- eval = FALSE------------------------------------------------------------
+## ----eval = FALSE-------------------------------------------------------------
 #  sync_shiny_inputs(input, session, inputIds = c('A', 'B'), uniform = list(
 #    function(a){as.numeric(a)},
 #    function(b){ b }
