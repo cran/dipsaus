@@ -50,7 +50,7 @@ overflow: visible;
 </style>
 <style type="text/css" data-origin="pandoc">
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span { line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -61,7 +61,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
 { counter-reset: source-line 0; }
@@ -376,33 +376,33 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <p>Parameter <code>max_lag</code> in <code>deparse_svec</code> changes
 the threshold of integers collapsed together:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">deparse_svec</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">7</span>,<span class="dv">11</span>))</span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co">#&gt; [1] &quot;1-2,4,7,11&quot;</span></span></code></pre></div>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">deparse_svec</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">7</span>,<span class="dv">11</span>), <span class="at">max_lag =</span> <span class="dv">2</span>)</span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt; [1] &quot;1-4,7,11&quot;</span></span></code></pre></div>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a></span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">deparse_svec</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">7</span>,<span class="dv">11</span>), <span class="at">max_lag =</span> <span class="dv">3</span>)</span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="co">#&gt; [1] &quot;1-7,11&quot;</span></span></code></pre></div>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co">#&gt; [1] &quot;1-2,4,7,11&quot;</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="fu">deparse_svec</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">7</span>,<span class="dv">11</span>), <span class="at">max_lag =</span> <span class="dv">2</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt; [1] &quot;1-4,7,11&quot;</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="fu">deparse_svec</span>(<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">4</span>,<span class="dv">7</span>,<span class="dv">11</span>), <span class="at">max_lag =</span> <span class="dv">3</span>)</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt; [1] &quot;1-7,11&quot;</span></span></code></pre></div>
 </div>
 <div id="system-information" class="section level4">
 <h4>3. System Information</h4>
 <p>The goal is to work as an alternative to retrieve system information.
 For example, R doesn’t provide functions to get memory limits, or CPU
 chip-set information on Linux or MacOS.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># Total RAM in bytes</span></span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="fu">get_ram</span>()</span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co">#&gt; 17179869184.0 B</span></span></code></pre></div>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a></span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="co"># Print-friendly</span></span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="fu">to_ram_size</span>(<span class="fu">get_ram</span>(), <span class="dv">1024</span>)</span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt; 16.0 GB</span></span></code></pre></div>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a></span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="co"># </span><span class="al">WARNING</span><span class="co">: $free is the total RAM - R usage, is no the actual free RAM</span></span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="fu">mem_limit2</span>()</span>
-<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co">#&gt; $total</span></span>
-<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co">#&gt; 17179869184.0 B</span></span>
-<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co">#&gt; $free</span></span>
-<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co">#&gt; 17120476000.0 B</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># Total RAM in bytes</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">get_ram</span>()</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt; 17179869184.0 B</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co"># Print-friendly</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="fu">to_ram_size</span>(<span class="fu">get_ram</span>(), <span class="dv">1024</span>)</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co">#&gt; 16.0 GB</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co"># </span><span class="al">WARNING</span><span class="co">: $free is the total RAM - R usage, is no the actual free RAM</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="fu">mem_limit2</span>()</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt; $total</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt; 17179869184.0 B</span></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt; $free</span></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co">#&gt; 17120491128.0 B</span></span></code></pre></div>
 </div>
 <div id="interactive-questions" class="section level4">
 <h4>4. Interactive Questions</h4>
@@ -413,22 +413,22 @@ than <code>yes</code>, <code>no</code> or <code>cancel</code> is given,
 it raise an error. <code>dipsaus::ask_yesno</code> will ask the question
 again and again until the user actually say <code>yes</code> or
 <code>no</code></p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">ask_yesno</span>(<span class="st">&#39;Please answer an yes/no question, ok?&#39;</span>)</span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="do">## ♥ Please answer an yes/no question, ok? (Yes/no): </span></span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="sc">&gt;</span> qweee</span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="do">## ⚠ Please answer Y/yes, N/no, or c to cancel. (Yes/no): </span></span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="sc">&gt;</span> ttt</span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="do">## ⚠ Please answer Y/yes, N/no, or c to cancel. (Yes/no): </span></span>
-<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="sc">&gt;</span> y</span>
-<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="do">## [1] TRUE</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">ask_yesno</span>(<span class="st">&#39;Please answer an yes/no question, ok?&#39;</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="do">## ♥ Please answer an yes/no question, ok? (Yes/no): </span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="sc">&gt;</span> qweee</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="do">## ⚠ Please answer Y/yes, N/no, or c to cancel. (Yes/no): </span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="sc">&gt;</span> ttt</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="do">## ⚠ Please answer Y/yes, N/no, or c to cancel. (Yes/no): </span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="sc">&gt;</span> y</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="do">## [1] TRUE</span></span></code></pre></div>
 <p><code>ask_or_default</code> instead of asking a yes/no question, it
 asks a question with default answer. User don’t have to type the answers
 if the they accept defaults:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">ask_or_default</span>(<span class="st">&quot;What is your password&quot;</span>, <span class="at">default =</span> <span class="st">&#39;I will not tell you!&#39;</span>)</span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="do">## ♥ What is your password</span></span>
-<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="do">##   [default is ‘I will not tell you!’] </span></span>
-<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="sc">&gt;</span></span>
-<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="do">## [1] &quot;I will not tell you!&quot;</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">ask_or_default</span>(<span class="st">&quot;What is your password&quot;</span>, <span class="at">default =</span> <span class="st">&#39;I will not tell you!&#39;</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="do">## ♥ What is your password</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="do">##   [default is ‘I will not tell you!’] </span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="sc">&gt;</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="do">## [1] &quot;I will not tell you!&quot;</span></span></code></pre></div>
 </div>
 
 

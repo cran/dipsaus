@@ -10,23 +10,15 @@ knitr::opts_chunk$set(
 library(shiny)
 library(dipsaus)
 
-## ----results='asis', echo=FALSE-----------------------------------------------
-shiny::includeCSS(system.file('www/shared/bootstrap/css/bootstrap.min.css', 
-                              package = 'shiny'))
-shiny::includeCSS(system.file('rmarkdown/templates/html_vignette/resources/vignette.css', 
-                              package = 'rmarkdown'))
-shiny::includeCSS(system.file('shiny-addons/dipsaus/dipsaus-dipterix-lib.js', 
-                              package = 'dipsaus'))
-
 ## ----eval=FALSE---------------------------------------------------------------
-#  
-#  # UI function
-#  actionButtonStyled(inputId, label, icon = NULL, width = NULL,
-#                     btn_type = "button", type = "primary", class = "", ...)
-#  
-#  # Update function
-#  updateActionButtonStyled(session, inputId, label = NULL, icon = NULL,
-#                           type = NULL, disabled = NULL, ...)
+# 
+# # UI function
+# actionButtonStyled(inputId, label, icon = NULL, width = NULL,
+#                    btn_type = "button", type = "primary", class = "", ...)
+# 
+# # Update function
+# updateActionButtonStyled(session, inputId, label = NULL, icon = NULL,
+#                          type = NULL, disabled = NULL, ...)
 
 ## ----results='asis', echo=FALSE-----------------------------------------------
 
@@ -82,30 +74,30 @@ tags$table(
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  compoundInput2(
-#    'compound', 'Group Label', label_color = 1:10,
-#    components = div(
-#      textInput('txt', 'Text'),
-#      selectInput('sel', 'Select', choices = 1:10, multiple = TRUE),
-#      sliderInput('sli', 'Slider', max=1, min=0, val=0.5)
-#    ), max_ncomp = 10, min_ncomp = 0, initial_ncomp = 1
-#  )
+# compoundInput2(
+#   'compound', 'Group Label', label_color = 1:10,
+#   components = div(
+#     textInput('txt', 'Text'),
+#     selectInput('sel', 'Select', choices = 1:10, multiple = TRUE),
+#     sliderInput('sli', 'Slider', max=1, min=0, val=0.5)
+#   ), max_ncomp = 10, min_ncomp = 0, initial_ncomp = 1
+# )
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  # Bad example
-#  observeEvent(input$A, {
-#    updateSliderInput(session, 'B', value = input$A)
-#  })
-#  observeEvent(input$B, {
-#    updateTextInput(session, 'A', value = input$B)
-#  })
+# # Bad example
+# observeEvent(input$A, {
+#   updateSliderInput(session, 'B', value = input$A)
+# })
+# observeEvent(input$B, {
+#   updateTextInput(session, 'A', value = input$B)
+# })
 
 ## ----eval = FALSE-------------------------------------------------------------
-#  sync_shiny_inputs(input, session, inputIds = c('A', 'B'), uniform = list(
-#    function(a){as.numeric(a)},
-#    function(b){ b }
-#  ), updates = list(
-#    function(a){updateTextInput(session, 'A', value = a)},
-#    function(b){updateSliderInput(session, 'B', value = b)}
-#  ))
+# sync_shiny_inputs(input, session, inputIds = c('A', 'B'), uniform = list(
+#   function(a){as.numeric(a)},
+#   function(b){ b }
+# ), updates = list(
+#   function(a){updateTextInput(session, 'A', value = a)},
+#   function(b){updateSliderInput(session, 'B', value = b)}
+# ))
 

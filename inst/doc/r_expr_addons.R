@@ -7,14 +7,12 @@ knitr::opts_chunk$set(
 ## ----setup, echo=FALSE--------------------------------------------------------
 library(shiny)
 library(dipsaus)
-gl <- glue::glue
-`%>%` <- magrittr::`%>%`
 data(ToothGrowth)
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  if( exists('aa') && !is.null(aa) ){
-#    aa <- 1
-#  }
+# if( exists('aa') && !is.null(aa) ){
+#   aa <- 1
+# }
 
 ## ----eval=TRUE----------------------------------------------------------------
 aa %?<-% 1
@@ -39,17 +37,14 @@ system.time({
 
 
 ## -----------------------------------------------------------------------------
-# gl <- glue::glue
-# `%>%` <- magrittr::`%>%`
-
 li <- c('A', 'T', 'G', 'C')
-li %>% iapply(c(el, ii) %=>% {
-  gl('The index for {el} is {ii}')
+li |> iapply(alist(el, ii) %=>% {
+  sprintf('The index for %s is %s', el, ii)
 })
 
 
 ## -----------------------------------------------------------------------------
-c(a, b=a^2, ...) %=>% {
+alist(a, b=a^2, ...) %=>% {
   print(c(a , b,...))
 }
 
@@ -89,50 +84,46 @@ match_calls(call = tagList(
 
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  x %>%
-#    do_something(...) ->
-#    x_tmp
-#  
-#  plot(x_tmp)
-#  
-#  x_tmp %>%
-#    do_others(...) ->
-#    final_results
+# x_tmp <- x |>
+#   do_something(...)
+# 
+# plot(x_tmp)
+# 
+# final_results <- x_tmp |>
+#   do_others(...)
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  x %>%
-#    do_something(...) %>%
-#    no_op(plot, ylim = c(0,100)) %>%
-#    do_others(...) ->
-#    final_results
+# final_results <- x |>
+#   do_something(...) |>
+#   no_op(plot, ylim = c(0,100)) |>
+#   do_others(...)
 
 ## ----fig.width=7,fig.height=5-------------------------------------------------
 
 par(mfrow = c(1,2))
 
-(1:10) %>% 
-  iapply(c(el, ii) %=>% {
+result <- (1:10) |> 
+  iapply(alist(el, ii) %=>% {
     rnorm(20, el, ii)
-  }, simplify = FALSE) %>% 
-  unlist %>% 
+  }, simplify = FALSE) |> 
+  unlist() |> 
   
   # Begin no-ops, result will not change
   no_op({
     # Use expression and "." to refer the data
     print(summary(.))
-  }) %>% 
+  }) |> 
   no_op(
     # Use function and pass ... to function
     plot, x = seq(0,1,length.out = 200), 
     type = 'p', ylim = c(-20,20), pch = 16,
     xlab = 'Time', ylab = 'Value', las = 1
-  ) %>% 
-  no_op(hist, xlab = 'Values', main = 'Histogram') ->
-  result
+  ) |> 
+  no_op(hist, xlab = 'Values', main = 'Histogram') 
 
 str(result)
 
 ## -----------------------------------------------------------------------------
-ToothGrowth %>%
+ToothGrowth |> 
   do_aggregate(len ~ ., mean)
 

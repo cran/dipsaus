@@ -1,3 +1,11 @@
+dipsaus 0.3.0
+=======
+
+* Improved `lapply_async` and tries to automatically set global variable sizes when large environment and variables need to be serialized
+* Removed `magrittr`, `remotes`, and `glue` from 'Suggests'
+
+## Changes
+
 dipsaus 0.2.9
 =======
 
