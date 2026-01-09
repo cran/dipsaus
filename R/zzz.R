@@ -7,6 +7,11 @@
 #   )
 # }
 
+# Internal operator for default values
+`%||%` <- function(x, y) {
+  if(is.null(x)) y else x
+}
+
 #' @name sumsquared
 #' @title Fast Calculation of Sum-squared for Large Matrices/Vectors
 #' @description Calculate \code{sum(x^2)}, but faster when the number of
@@ -34,6 +39,9 @@ register_shiny <- function(){
 
   registerSetInputs()
 
+  # Register directory input handlers
+  registerDirectoryInputHandlers()
+
 }
 
 .master_session_id <- local({
@@ -50,12 +58,40 @@ is_master <- function(){
   identical(.master_session_id(), session_uuid())
 }
 
+dipsaus_init <- local({
+  env <- NULL
+
+  function() {
+    if(is.null(env)) {
+      env <<- new.env(parent = emptyenv())
+      env$cache_path <- R_user_dir("dipsaus", which = "cache")
+      env$remove_empty_dir <- remove_empty_dir
+      environment(env$remove_empty_dir) <- new.env(parent = baseenv())
+
+      reg.finalizer(env, function(e) {
+        tryCatch({
+          if(file.exists(e$cache_path)) {
+            e$remove_empty_dir(e$cache_path, recursive = TRUE)
+          }
+        }, error = function(e) {})
+      })
+
+    }
+
+  }
+})
+
+# Session-based storage for directory upload state
+.directory_upload_state <- new.env(parent = emptyenv())
+
 .onLoad <- function(libname, pkgname){
 
   ns <- asNamespace(pkgname)
   assign(".locker_keys", fastmap::fastmap(), envir = ns)
   assign(".shiny_input_bindings", fastmap::fastmap(), envir = ns)
   ns$.master_session_id( session_uuid() )
+
+  dipsaus_init()
 
   register_shiny()
   options("dipsaus.shortcuts" = fastmap2())
@@ -70,8 +106,6 @@ is_master <- function(){
     shiny::removeResourcePath('dipsaus')
   }
 }
-
-
 
 #' @name dipsaus-defunct
 #' @title Defunct Functions in Package \pkg{dipsaus}

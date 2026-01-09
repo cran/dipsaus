@@ -114,6 +114,135 @@ left: 10px;
 visibility: unset;
 color: #999;
 font-size: x-small;
+}
+
+.dipsaus-fancy-directory-input {
+margin-bottom: 15px;
+}
+.dipsaus-fancy-directory-input .shiny-input-container {
+width: 100%;
+position: relative;
+margin-bottom: 0;
+}
+.dipsaus-fancy-directory-input .shiny-input-container > .input-group {
+width: 100%;
+min-width: 200px;
+max-width: 100%;
+min-height: 170px;
+position: relative;
+}
+.dipsaus-fancy-directory-input-m .shiny-input-container > .input-group {
+min-height: 300px;
+}
+.dipsaus-fancy-directory-input-l .shiny-input-container > .input-group {
+min-height: 450px;
+}
+.dipsaus-fancy-directory-input-xl .shiny-input-container > .input-group {
+min-height: 600px;
+}
+.dipsaus-fancy-directory-input .shiny-input-container > .input-group > label.input-group-btn {
+position: absolute;
+display: block;
+top: 50%;
+right: 50%;
+transform: translate(50%, 50%);
+transform: translate(50%, calc(50% + 8px));
+width: auto;
+z-index: 4;
+}
+.dipsaus-fancy-directory-input .shiny-input-container > .input-group > label.input-group-btn > .btn-file {
+margin: 0;
+border-radius: 5px !important;
+}
+.dipsaus-fancy-directory-input .shiny-input-container > .input-group > input.form-control {
+display: block;
+height: 100%;
+position: absolute;
+width: 100%;
+z-index: 2;
+text-align: center;
+word-wrap: break-word;
+white-space: break-spaces;
+text-overflow: ellipsis;
+overflow: hidden;
+border-radius: 5px;
+border: 1px dashed #6c757d;
+padding: 6px 12px 26px 12px;
+background-color: #f8f9fa;
+}
+.dipsaus-fancy-directory-input .shiny-input-container > .input-group > .progress.shiny-file-input-progress
+{
+position: absolute;
+bottom: 0;
+left: 0;
+height: 24px;
+min-height: 24px;
+width: 100%;
+margin: 0;
+border-bottom-left-radius: 5px;
+border-bottom-right-radius: 5px;
+border-top-left-radius: 0;
+border-top-right-radius: 0;
+z-index: 10;
+min-width: 200px;
+max-width: 100%;
+background-color: #f5f5f5;
+visibility: visible !important;
+}
+
+.dipsaus-fancy-directory-input .shiny-input-container > .input-group::before {
+content: "📁";
+position: absolute;
+top: 30%;
+left: 50%;
+transform: translateX(-50%);
+font-size: 48px;
+opacity: 0.3;
+z-index: 1;
+pointer-events: none;
+}
+
+.dipsaus-fancy-directory-input.dragging .shiny-input-container > .input-group {
+border-color: #337ab7;
+border-width: 2px;
+background-color: #f0f8ff;
+}
+.dipsaus-fancy-directory-input.dragging .shiny-input-container > .input-group::before {
+opacity: 0.6;
+font-size: 64px;
+}
+
+.dipsaus-directory-after-content {
+margin-top: 8px;
+padding: 0;
+color: #999;
+font-size: 11px;
+text-align: left;
+}
+
+.dipsaus-directory-options {
+margin-top: 4px;
+padding: 0 10px;
+font-size: 13px;
+}
+.dipsaus-directory-options label {
+font-weight: normal;
+cursor: pointer;
+margin-bottom: 0;
+display: flex;
+align-items: center;
+}
+.dipsaus-auto-cleanup-checkbox {
+cursor: pointer;
+margin: 0;
+}
+
+.dipsaus-fancy-directory-input .progress-bar {
+line-height: 24px;
+font-size: 12px;
+text-align: center;
+width: 100%;
+padding: 0 8px;
 }</style>
 <script>/******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
@@ -7887,6 +8016,1606 @@ const register_screenshot = (Shiny, debug = false) => {
 
 
 
+;// ./src/shiny-input-directory.js
+/**
+ * Directory Input Binding for Shiny
+ * Custom implementation that handles directory uploads with actual file content
+ */
+
+function register_directoryInput(Shiny, debug = false) {
+  if(!Shiny || !Shiny.inputBindings) {
+    if(debug) {
+      console.warn("Shiny not found, cannot register directoryInput binding");
+    }
+    return;
+  }
+
+  // Run feature detection
+  let supportsFileSystemAccessAPI = false;
+  let supportsWebkitGetAsEntry = false;
+  try {
+    supportsFileSystemAccessAPI = 'getAsFileSystemHandle' in DataTransferItem.prototype;
+    supportsWebkitGetAsEntry = 'webkitGetAsEntry' in DataTransferItem.prototype;
+  } catch (e) {
+    // Feature detection failed, both will remain false
+  }
+
+  if(debug) {
+    console.log('File System Access API support:', supportsFileSystemAccessAPI);
+    console.log('Webkit GetAsEntry support:', supportsWebkitGetAsEntry);
+  }
+
+  // Create a new input binding for directory inputs with higher priority
+  const directoryInputBinding = new Shiny.InputBinding();
+
+  $.extend(directoryInputBinding, {
+    find: function(scope) {
+      // Find our specific directory input wrapper elements
+      return $(scope).find('.dipsaus-fancy-directory-input');
+    },
+
+    initialize: function(el) {
+      const $el = $(el);
+      const $fileInput = $el.find('input[type="file"]');
+      const $textInput = $el.find('input[type="text"]');
+      const $inputGroup = $el.find('.input-group');
+      const binding = this;
+      
+      // Mark file input to prevent Shiny's default file input binding from handling it
+      $fileInput.addClass('shiny-bound-input');
+      
+      // Attributes should already be set by R, but ensure they exist
+      $fileInput.attr('webkitdirectory', '');
+      $fileInput.attr('directory', '');
+      $fileInput.attr('multiple', '');
+      
+      // Store reference to binding for file upload
+      $fileInput.data('directoryInputBinding', this);
+      
+      // Update text input when files are selected
+      $fileInput.on('change', function() {
+        const files = this.files;
+        if(files && files.length > 0) {
+          // Get directory name from first file
+          const firstPath = files[0].webkitRelativePath || files[0].name;
+          const dirName = firstPath.split('/')[0] || 'Selected directory';
+          $textInput.val(dirName + ' (' + files.length + ' files)');
+        } else {
+          $textInput.val('');
+        }
+      });
+      
+      // Add auto-cleanup checkbox handler
+      const $autoCleanupCheckbox = $el.find('.dipsaus-auto-cleanup-checkbox');
+      $autoCleanupCheckbox.on('change', function() {
+        const isChecked = $(this).prop('checked');
+        $el.attr('data-auto-cleanup', isChecked ? 'true' : 'false');
+        if(debug) {
+          console.log('Auto-cleanup toggled:', isChecked);
+        }
+      });
+      
+      // Add drag and drop functionality
+      $inputGroup.on('dragover', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $el.addClass('dragging');
+      });
+      
+      $inputGroup.on('dragleave', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $el.removeClass('dragging');
+      });
+      
+      $inputGroup.on('drop', async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $el.removeClass('dragging');
+        
+        const items = e.originalEvent.dataTransfer.items;
+        if(items && items.length > 0) {
+          // Try to collect files from the dropped item using modern API first
+          const dataItems = [...items];
+          const files = await binding._extractFilesFromDataItems(dataItems);
+          
+          if(files.length > 0) {
+            // Create a new FileList-like object
+            const dataTransfer = new DataTransfer();
+            files.forEach(f => dataTransfer.items.add(f));
+            $fileInput[0].files = dataTransfer.files;
+            $fileInput.trigger('change');
+          }
+        }
+      });
+      
+      if(debug) {
+        console.log("Initialized directory input:", $el.attr('id'));
+      }
+    },
+
+    getValue: function(el) {
+      const $el = $(el);
+      const uploadInfo = $el.data('uploadInfo');
+      
+      if(!uploadInfo) {
+        return null;
+      }
+      
+      return uploadInfo;
+    },
+    
+    getFileStatus: function(el) {
+      const $el = $(el);
+      return $el.data('fileStatus') || null;
+    },
+
+    setValue: function(el, value) {
+      // File inputs cannot be programmatically set for security reasons
+    },
+
+    subscribe: function(el, callback) {
+      const $el = $(el);
+      const $fileInput = $el.find('input[type="file"]');
+      const $progress = $el.find('.progress');
+      const $progressBar = $progress.find('.progress-bar');
+      const binding = this;
+      
+      if(debug) {
+        console.log('Subscribe - Found progress element:', $progress.length);
+        console.log('Subscribe - Found progress bar:', $progressBar.length);
+      }
+      
+      $fileInput.on('change.directoryInputBinding', async function(e) {
+        const files = e.target.files;
+        
+        if(!files || files.length === 0) {
+          $el.data('uploadInfo', null);
+          callback(false);
+          return;
+        }
+
+        // Filter out hidden files
+        const filteredFiles = [];
+        let totalSize = 0;
+        for(let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const pathParts = (file.webkitRelativePath || file.name).split('/');
+          const isHidden = pathParts.some(part => part.startsWith('.'));
+          if(!isHidden) {
+            filteredFiles.push(file);
+            totalSize += file.size;
+          }
+        }
+
+        if(filteredFiles.length === 0) {
+          $el.data('uploadInfo', null);
+          callback(false);
+          return;
+        }
+
+        // Show progress bar
+        $progress.show();
+        $progress.css('display', 'block');
+        
+        // Set initial progress
+        $progressBar.text('0 / ' + filteredFiles.length + ' files');
+        
+        if(debug) {
+          console.log('Progress bar shown, uploading', filteredFiles.length, 'files');
+        }
+
+        try {
+          // Process files incrementally
+          await binding._processFilesIncremental(el, filteredFiles, $progressBar, $progress, callback);
+          
+        } catch(error) {
+          console.error("Error uploading directory:", error);
+          $progress.hide();
+          alert("Error uploading directory: " + error.message);
+        }
+      });
+    },
+
+    _processFilesIncremental: async function(el, files, $progressBar, $progress, callback) {
+      const $el = $(el);
+      const inputId = $el.attr('id');
+      
+      // Build directory structure and file metadata
+      const directoryStructure = {};
+      const fileMetadata = [];
+      
+      for(let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const relativePath = file.webkitRelativePath || file.name;
+        
+        const fileId = `file_${i}`;
+        
+        fileMetadata.push({
+          fileId: fileId,
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          relativePath: relativePath,
+          lastModified: file.lastModified
+        });
+        
+        this._addToDirectoryTree(directoryStructure, relativePath, {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          lastModified: file.lastModified,
+          fileId: fileId
+        });
+      }
+      
+      // Initialize file status tracking
+      const fileStatus = {};
+      fileMetadata.forEach(fm => {
+        fileStatus[fm.fileId] = {
+          name: fm.name,
+          relativePath: fm.relativePath,
+          status: 'pending',
+          progress: 0,
+          error: null
+        };
+      });
+      
+      // Read autoCleanup attribute
+      const autoCleanupAttr = $el.attr('data-auto-cleanup');
+      const autoCleanup = autoCleanupAttr === 'true';
+      
+      // Store initial metadata and status
+      const initialData = {
+        fileMetadata: fileMetadata,
+        directoryStructure: directoryStructure,
+        totalFiles: files.length,
+        ready: false,
+        upload_status: 'initialized',
+        autoCleanup: autoCleanup
+      };
+      
+      $el.data('uploadInfo', initialData);
+      $el.data('fileStatus', fileStatus);
+      
+      // Trigger initial callback to send metadata
+      callback(true);
+      
+      // Initialize progress2 if enabled
+      const progressEnabled = $el.attr('data-progress-enabled') === 'true';
+      const progressTitle = $el.attr('data-progress-title') || 'Uploading directory';
+      let progressId = null;
+      
+      if(debug) {
+        console.log('Progress settings:');
+        console.log('  data-progress-enabled:', $el.attr('data-progress-enabled'));
+        console.log('  progressEnabled:', progressEnabled);
+        console.log('  progressTitle:', progressTitle);
+        console.log('  window.Shiny available:', !!window.Shiny);
+      }
+      
+      if(progressEnabled && window.Shiny) {
+        progressId = `${inputId}_upload_progress`;
+        if(debug) {
+          console.log('Initializing progress2 with ID:', progressId);
+        }
+        Shiny.setInputValue(progressId + '_start', {
+          title: progressTitle,
+          max: files.length,
+          shiny: true,
+          quiet: false
+        }, {priority: 'event'});
+      }
+      
+      // Now process files in parallel with concurrency control
+      const maxFileSizeAttr = $el.attr('data-max-file-size');
+      const MAX_TOTAL_FILE_SIZE = maxFileSizeAttr ? parseInt(maxFileSizeAttr, 10) : (5 * 1024 * 1024);
+      const CHUNK_SIZE = 5 * 1024 * 1024;
+      const CONCURRENCY_LIMIT = 10; // Process up to 5 files simultaneously
+      const BATCH_SIZE = 10; // Send files to server in batches of 10
+      
+      if(debug) {
+        console.log('Processing files with settings:');
+        console.log('  data-max-file-size attribute:', maxFileSizeAttr);
+        console.log('  MAX_TOTAL_FILE_SIZE:', MAX_TOTAL_FILE_SIZE, 'bytes (', (MAX_TOTAL_FILE_SIZE / 1024 / 1024).toFixed(2), 'MB )');
+        console.log('  CHUNK_SIZE:', CHUNK_SIZE, 'bytes');
+        console.log('  CONCURRENCY_LIMIT:', CONCURRENCY_LIMIT, 'files');
+        console.log('  BATCH_SIZE:', BATCH_SIZE, 'files per network request');
+      }
+      
+      // Process single file (extracted to enable parallel processing)
+      const processFile = async (file, i) => {
+        const fileId = `file_${i}`;
+        const relativePath = file.webkitRelativePath || file.name;
+        
+        // Update status to processing
+        fileStatus[fileId].status = 'processing';
+        
+        try {
+          let fileData = null;
+          
+          if(debug) {
+            console.log(`File ${i + 1}: ${file.name}, size: ${file.size} bytes (${(file.size / 1024 / 1024).toFixed(2)} MB), max allowed: ${MAX_TOTAL_FILE_SIZE}`);
+          }
+          
+          if(file.size <= MAX_TOTAL_FILE_SIZE) {
+            // Check if file needs chunking (> 5MB)
+            if(file.size > CHUNK_SIZE) {
+              // Read file in chunks
+              const chunks = [];
+              const numChunks = Math.ceil(file.size / CHUNK_SIZE);
+              
+              for(let chunkIndex = 0; chunkIndex < numChunks; chunkIndex++) {
+                const start = chunkIndex * CHUNK_SIZE;
+                const end = Math.min(start + CHUNK_SIZE, file.size);
+                const chunk = file.slice(start, end);
+                
+                const chunkData = await new Promise((resolve, reject) => {
+                  const reader = new FileReader();
+                  reader.onload = function(e) {
+                    resolve(e.target.result);
+                  };
+                  reader.onerror = function(err) {
+                    reject(new Error('Failed to read file chunk: ' + file.name));
+                  };
+                  const timeout = setTimeout(() => {
+                    reader.abort();
+                    reject(new Error('Timeout reading file chunk: ' + file.name));
+                  }, 30000);
+                  
+                  reader.readAsDataURL(chunk);
+                  reader.onloadend = function() {
+                    clearTimeout(timeout);
+                  };
+                });
+                
+                chunks.push(chunkData);
+                
+                // Update progress
+                fileStatus[fileId].progress = ((chunkIndex + 1) / numChunks) * 100;
+              }
+              
+              fileData = {
+                fileId: fileId,
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                relativePath: relativePath,
+                base64data: chunks,
+                chunked: true,
+                numChunks: numChunks
+              };
+            } else {
+              // Read small file as single base64 string
+              const base64String = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                  resolve(e.target.result);
+                };
+                reader.onerror = function(err) {
+                  reject(new Error('Failed to read file: ' + file.name));
+                };
+                const timeout = setTimeout(() => {
+                  reader.abort();
+                  reject(new Error('Timeout reading file: ' + file.name));
+                }, 30000);
+                
+                reader.readAsDataURL(file);
+                reader.onloadend = function() {
+                  clearTimeout(timeout);
+                };
+              });
+              
+              fileData = {
+                fileId: fileId,
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                relativePath: relativePath,
+                base64data: base64String,
+                chunked: false
+              };
+              
+              fileStatus[fileId].progress = 100;
+            }
+            
+            // Update status to complete
+            fileStatus[fileId].status = 'complete';
+            fileStatus[fileId].progress = 100;
+            
+          } else {
+            // File too large
+            fileStatus[fileId].status = 'skipped';
+            fileStatus[fileId].error = 'File exceeds maximum size';
+            
+            fileData = {
+              fileId: fileId,
+              name: file.name,
+              size: file.size,
+              type: file.type,
+              relativePath: relativePath,
+              base64data: null,
+              _tooLarge: true
+            };
+          }
+          
+          return { fileData, fileId, fileName: file.name };
+          
+        } catch(err) {
+          console.error('Error processing file:', file.name, err);
+          fileStatus[fileId].status = 'error';
+          fileStatus[fileId].error = err.message;
+          
+          return {
+            fileData: {
+              fileId: fileId,
+              name: file.name,
+              size: file.size,
+              type: file.type,
+              relativePath: relativePath,
+              base64data: null,
+              _error: err.message
+            },
+            fileId: fileId,
+            fileName: file.name,
+            error: err.message
+          };
+        }
+      };
+      
+      // Process files with concurrency limit using worker pool pattern
+      let completedCount = 0;
+      let batchBuffer = [];
+      const statusUpdateBuffer = [];
+      let lastStatusUpdate = Date.now();
+      const STATUS_UPDATE_INTERVAL = 500; // ms - throttle status updates
+      
+      const processQueue = async () => {
+        const results = [];
+        
+        for(let i = 0; i < files.length; i += CONCURRENCY_LIMIT) {
+          const batch = files.slice(i, Math.min(i + CONCURRENCY_LIMIT, files.length));
+          const batchPromises = batch.map((file, offset) => processFile(file, i + offset));
+          
+          const batchResults = await Promise.all(batchPromises);
+          results.push(...batchResults);
+          
+          // Update progress bar
+          completedCount += batch.length;
+          $progressBar.text(`Processing ${completedCount} / ${files.length} files`);
+          
+          // Buffer files and send in batches
+          for(const result of batchResults) {
+            batchBuffer.push(result);
+            statusUpdateBuffer.push(result.fileId);
+            
+            // Send batch when buffer is full
+            if(batchBuffer.length >= BATCH_SIZE) {
+              const toSend = batchBuffer.splice(0, BATCH_SIZE);
+              toSend.forEach(item => this._sendFileToShiny(el, item.fileData));
+              
+              // Throttle status updates
+              const now = Date.now();
+              if(now - lastStatusUpdate > STATUS_UPDATE_INTERVAL) {
+                this._updateFileStatusBatch(el, statusUpdateBuffer.splice(0));
+                lastStatusUpdate = now;
+              }
+            }
+            
+            // Update progress2 if enabled
+            if(progressEnabled && progressId && window.Shiny) {
+              if(debug) {
+                console.log('Sending progress update:', completedCount, '/', files.length, '-', result.fileName);
+              }
+              Shiny.setInputValue(progressId + '_update', {
+                inc: 1,
+                current: completedCount,
+                total: files.length,
+                filename: result.fileName
+              }, {priority: 'event'});
+            }
+          }
+        }
+        
+        // Send remaining files in buffer
+        if(batchBuffer.length > 0) {
+          batchBuffer.forEach(item => this._sendFileToShiny(el, item.fileData));
+          batchBuffer = [];
+        }
+        
+        // Send final status update
+        if(statusUpdateBuffer.length > 0) {
+          this._updateFileStatusBatch(el, statusUpdateBuffer);
+        }
+        
+        return results;
+      };
+      
+      // Execute parallel processing
+      await processQueue();
+      
+      // All files processed
+      $progress.hide();
+      initialData.ready = true;
+      
+      // Determine upload status based on file processing results
+      const hasErrors = Object.values(fileStatus).some(status => status.status === 'error');
+      initialData.upload_status = hasErrors ? 'errored' : 'completed';
+      
+      $el.data('uploadInfo', initialData);
+      
+      // Close progress2 if enabled
+      if(progressEnabled && progressId && window.Shiny) {
+        if(debug) {
+          console.log('Closing progress2:', progressId);
+        }
+        Shiny.setInputValue(progressId + '_close', true, {priority: 'event'});
+      }
+      
+      // Trigger a final update to the main input with completed status
+      // This allows R to know all files are done
+      if(debug) {
+        console.log('All files processed, updating main input with completed status');
+      }
+      Shiny.setInputValue(inputId + ':dipsaus.directoryInput', initialData, {priority: 'event'});
+      
+      callback(true);
+    },
+    
+    _sendFileToShiny: function(el, fileData) {
+      const $el = $(el);
+      const inputId = $el.attr('id');
+      const fileInputId = `${inputId}__file`;
+      
+      if(debug) {
+        console.log('Sending file to Shiny:', fileData.name);
+        console.log('  Has base64data:', fileData.base64data !== null && fileData.base64data !== undefined);
+        console.log('  Chunked:', fileData.chunked || false);
+        console.log('  _tooLarge:', fileData._tooLarge || false);
+        console.log('  _error:', fileData._error || 'none');
+      }
+      
+      if(window.Shiny && Shiny.setInputValue) {
+        // Send with type suffix to trigger custom input handler
+        Shiny.setInputValue(fileInputId + ':dipsaus.directoryInput.file', fileData, {
+          priority: 'event'
+        });
+      }
+    },
+    
+    _updateFileStatus: function(el, fileId, statusData) {
+      const $el = $(el);
+      const inputId = $el.attr('id');
+      const statusInputId = `${inputId}__status`;
+      const fileStatus = $el.data('fileStatus');
+      
+      if(window.Shiny && Shiny.setInputValue) {
+        // Send updated status table as array
+        const statusTable = Object.keys(fileStatus).map(fid => {
+          const status = fileStatus[fid];
+          return {
+            fileId: fid,
+            name: status.name,
+            relativePath: status.relativePath,
+            status: status.status,
+            progress: status.progress,
+            error: status.error !== null && status.error !== undefined ? String(status.error) : ""
+          };
+        });
+        
+        // Send with type suffix to trigger custom input handler
+        Shiny.setInputValue(statusInputId + ':dipsaus.directoryInput.status', statusTable, {
+          priority: 'event'
+        });
+      }
+    },
+    
+    _updateFileStatusBatch: function(el, fileIds) {
+      // Optimized batch status update - only send status for updated files
+      const $el = $(el);
+      const inputId = $el.attr('id');
+      const statusInputId = `${inputId}__status`;
+      const fileStatus = $el.data('fileStatus');
+      
+      if(window.Shiny && Shiny.setInputValue && fileIds.length > 0) {
+        // Only send status for the files that were updated
+        const statusTable = fileIds.map(fid => {
+          const status = fileStatus[fid];
+          return {
+            fileId: fid,
+            name: status.name,
+            relativePath: status.relativePath,
+            status: status.status,
+            progress: status.progress,
+            error: status.error !== null && status.error !== undefined ? String(status.error) : ""
+          };
+        });
+        
+        // Send with type suffix to trigger custom input handler
+        Shiny.setInputValue(statusInputId + ':dipsaus.directoryInput.status', statusTable, {
+          priority: 'event'
+        });
+      }
+    },
+
+    _uploadFiles: async function(el, files, $progressBar, $progress) {
+      const $el = $(el);
+      const inputId = $el.attr('id');  // Get the main input ID from the outer div
+      
+      // Build directory structure
+      const directoryStructure = {};
+      const fileData = [];
+      
+      for(let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const relativePath = file.webkitRelativePath || file.name;
+        
+        fileData.push({
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          relativePath: relativePath,
+          lastModified: file.lastModified
+        });
+        
+        this._addToDirectoryTree(directoryStructure, relativePath, {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          lastModified: file.lastModified
+        });
+      }
+
+      // Store relative paths separately
+      const relativePaths = [];
+      for(let i = 0; i < files.length; i++) {
+        relativePaths.push(files[i].webkitRelativePath || files[i].name);
+      }
+      
+      // Since Shiny's upload endpoint doesn't work with custom bindings,
+      // we'll send files as base64 data through the normal setValue mechanism
+      // Base64 encoding increases size by ~33%, so we need to be careful with memory
+      
+      const uploadedFiles = [];
+      
+      // Get max file size from data attribute (in bytes)
+      // This is set by R based on maxSize parameter or shiny.maxRequestSize option
+      const maxFileSizeAttr = $el.attr('data-max-file-size');
+      const MAX_TOTAL_FILE_SIZE = maxFileSizeAttr ? parseInt(maxFileSizeAttr, 10) : (5 * 1024 * 1024); // Default 5MB to match Shiny default
+      
+      // Chunk size for large files (5MB)
+      const CHUNK_SIZE = 5 * 1024 * 1024;
+      
+      for(let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const relativePath = relativePaths[i];
+        
+        // Update progress with file count
+        $progressBar.text((i + 1) + ' / ' + files.length + ' files');
+        
+        if(file.size <= MAX_TOTAL_FILE_SIZE) {
+          try {
+            // Check if file needs chunking (> 5MB)
+            if(file.size > CHUNK_SIZE) {
+              // Read file in chunks to avoid string length limitations
+              const chunks = [];
+              const numChunks = Math.ceil(file.size / CHUNK_SIZE);
+              
+              for(let chunkIndex = 0; chunkIndex < numChunks; chunkIndex++) {
+                const start = chunkIndex * CHUNK_SIZE;
+                const end = Math.min(start + CHUNK_SIZE, file.size);
+                const chunk = file.slice(start, end);
+                
+                const chunkData = await new Promise((resolve, reject) => {
+                  const reader = new FileReader();
+                  reader.onload = function(e) {
+                    resolve(e.target.result); // This is the base64 data URL
+                  };
+                  reader.onerror = function(err) {
+                    reject(new Error('Failed to read file chunk: ' + file.name));
+                  };
+                  // Add timeout to prevent hanging
+                  const timeout = setTimeout(() => {
+                    reader.abort();
+                    reject(new Error('Timeout reading file chunk: ' + file.name));
+                  }, 30000); // 30 second timeout per chunk
+                  
+                  reader.readAsDataURL(chunk);
+                  reader.onloadend = function() {
+                    clearTimeout(timeout);
+                  };
+                });
+                
+                chunks.push(chunkData);
+              }
+              
+              uploadedFiles.push({
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                datapath: null, // Will be created server-side
+                relativePath: relativePath,
+                base64data: chunks, // Array of base64 chunks
+                chunked: true,
+                numChunks: numChunks
+              });
+            } else {
+              // Read file as single base64 string for small files
+              const fileData = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                  resolve(e.target.result); // This is the base64 data URL
+                };
+                reader.onerror = function(err) {
+                  reject(new Error('Failed to read file: ' + file.name));
+                };
+                // Add timeout to prevent hanging
+                const timeout = setTimeout(() => {
+                  reader.abort();
+                  reject(new Error('Timeout reading file: ' + file.name));
+                }, 30000); // 30 second timeout per file
+                
+                reader.readAsDataURL(file);
+                reader.onloadend = function() {
+                  clearTimeout(timeout);
+                };
+              });
+              
+              uploadedFiles.push({
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                datapath: null, // Will be created server-side
+                relativePath: relativePath,
+                base64data: fileData,
+                chunked: false
+              });
+            }
+          } catch(err) {
+            console.error('Error reading file:', file.name, err);
+            uploadedFiles.push({
+              name: file.name,
+              size: file.size,
+              type: file.type,
+              datapath: null,
+              relativePath: relativePath,
+              base64data: null,
+              _error: err.message
+            });
+          }
+        } else {
+          // For files exceeding the total size limit, skip them with a warning
+          console.warn('Skipping large file (>' + (MAX_TOTAL_FILE_SIZE / 1024 / 1024) + 'MB):', file.name, '(' + (file.size / 1024 / 1024).toFixed(2) + 'MB)');
+          
+          uploadedFiles.push({
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            datapath: null,
+            relativePath: relativePath,
+            base64data: null, // Too large for base64
+            _tooLarge: true
+          });
+        }
+      }
+      
+      // Set final progress
+      $progressBar.text(uploadedFiles.length + ' / ' + files.length + ' files');
+
+      // Read autoCleanup attribute
+      const autoCleanupAttr = $el.attr('data-auto-cleanup');
+      const autoCleanup = autoCleanupAttr === 'true';
+
+      // Return the structured data with base64 content
+      return {
+        name: uploadedFiles.map(f => f.name),
+        size: uploadedFiles.map(f => f.size),
+        type: uploadedFiles.map(f => f.type),
+        relativePath: uploadedFiles.map(f => f.relativePath),
+        base64data: uploadedFiles.map(f => f.base64data),
+        directoryStructure: directoryStructure,
+        autoCleanup: autoCleanup
+      };
+    },
+
+    // Extract files from data transfer items using modern API with fallbacks
+    _extractFilesFromDataItems: async function(dataItems) {
+      const files = [];
+
+      // Collect entries immediately
+      const items = dataItems
+        .filter(item => item.kind === 'file')
+        .map(item => {
+          if (supportsFileSystemAccessAPI && typeof item.getAsFileSystemHandle === 'function') {
+            return {
+              'type': 'FileSystemHandle',
+              'entry': item.getAsFileSystemHandle() // Promise
+            };
+          }
+          if (supportsWebkitGetAsEntry && typeof item.webkitGetAsEntry === 'function') {
+            return {
+              'type': 'WebkitEntry',
+              'entry': item.webkitGetAsEntry()
+            };
+          }
+          return {
+            'type': 'Naive',
+            'entry': item
+          };
+        });
+
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+
+        if(!item || !item.entry) { continue; }
+
+        switch (item.type) {
+          case 'FileSystemHandle':
+          {
+            const entry = await item.entry;
+            if(debug) {
+              console.debug(`Using FileSystemAccessAPI to open [${ entry.name }]`);
+            }
+            const subFiles = await this._collectFilesFromFileSystemHandle(entry);
+            files.push(...subFiles);
+            break;
+          }
+
+          case 'WebkitEntry':
+          {
+            if(debug) {
+              console.debug(`Using WebkitGetAsEntry to open [${ item.entry.name }]`);
+            }
+            const subFiles = await this._collectFilesFromWebkitEntry(item.entry);
+            files.push(...subFiles);
+            break;
+          }
+
+          default:
+          {
+            const file = item.entry.getAsFile();
+            if(debug) {
+              console.debug(`Using Naive method to open the file ${ file ? file.name : 'unknown' }`);
+            }
+            if(file && !file.name.startsWith('.')) {
+              files.push(file);
+            }
+          }
+        }
+      }
+
+      return files;
+    },
+
+    // Collect files from File System Access API handle
+    _collectFilesFromFileSystemHandle: async function(entry, path = '') {
+      const files = [];
+
+      const handleEntry = async (e, currentPath) => {
+        // Skip hidden files and directories
+        if(e.name.startsWith('.')) {
+          return;
+        }
+
+        if(e.kind === 'file') {
+          const file = await e.getFile();
+          
+          // Add relative path to the file object
+          const fullPath = currentPath ? currentPath + '/' + file.name : file.name;
+          Object.defineProperty(file, 'webkitRelativePath', {
+            value: fullPath,
+            writable: false
+          });
+          
+          files.push(file);
+        } else if (e.kind === 'directory') {
+          const newPath = currentPath ? currentPath + '/' + e.name : e.name;
+          for await (const [name, child] of e.entries()) {
+            await handleEntry(child, newPath);
+          }
+        }
+      };
+
+      await handleEntry(entry, path);
+      return files;
+    },
+
+    // Collect files from webkit entry (legacy API)
+    _collectFilesFromWebkitEntry: async function(entry, path = '') {
+      const files = [];
+      
+      const handleEntry = async (e, currentPath) => {
+        // Skip hidden files and directories
+        if(e.name.startsWith('.')) {
+          return;
+        }
+
+        if (e.isFile) {
+          const file = await new Promise((resolve, reject) => {
+            e.file((file) => {
+              if(file) {
+                // Add relative path to the file object
+                const fullPath = currentPath ? currentPath + '/' + file.name : file.name;
+                Object.defineProperty(file, 'webkitRelativePath', {
+                  value: fullPath,
+                  writable: false
+                });
+                resolve(file);
+              } else {
+                resolve(null);
+              }
+            }, resolve);
+          });
+          
+          if(file) {
+            files.push(file);
+          }
+        } else if (e.isDirectory) {
+          const reader = e.createReader();
+          const entries = await new Promise((resolve, reject) => {
+            const allEntries = [];
+            
+            function readEntries() {
+              reader.readEntries(async (results) => {
+                if(results.length === 0) {
+                  resolve(allEntries);
+                } else {
+                  allEntries.push(...results);
+                  readEntries();
+                }
+              }, resolve);
+            }
+            
+            readEntries();
+          });
+          
+          const newPath = currentPath ? currentPath + '/' + e.name : e.name;
+          for (const subEntry of entries) {
+            await handleEntry(subEntry, newPath);
+          }
+        }
+      };
+
+      await handleEntry(entry, path);
+      return files;
+    },
+
+    _addToDirectoryTree: function(tree, path, fileInfo) {
+      const parts = path.split('/');
+      let current = tree;
+
+      for(let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        const isLast = i === parts.length - 1;
+
+        if(isLast) {
+          // It's a file
+          if(!current._files) {
+            current._files = [];
+          }
+          current._files.push({
+            name: part,
+            size: fileInfo.size,
+            type: fileInfo.type,
+            lastModified: fileInfo.lastModified
+          });
+        } else {
+          // It's a directory
+          if(!current[part]) {
+            current[part] = {};
+          }
+          current = current[part];
+        }
+      }
+    },
+
+    unsubscribe: function(el) {
+      const $el = $(el);
+      const $fileInput = $el.find('input[type="file"]');
+      $fileInput.off('.directoryInputBinding');
+    },
+
+    getType: function(el) {
+      return 'dipsaus.directoryInput';
+    }
+  });
+
+  // Register the binding with higher priority than standard fileInput
+  Shiny.inputBindings.register(directoryInputBinding, 'dipsaus.directoryInput', 100);
+
+  if(debug) {
+    console.log("Registered directoryInput binding");
+  }
+}
+
+;// ./src/streamsaver.js
+/*! streamsaver. MIT License. Jimmy Wärting <https://jimmy.warting.se/opensource> */
+/* Vendored for dipsaus package - v2.0.5 */
+
+const streamSaver = (function() {
+  'use strict'
+
+  const global = typeof window === 'object' ? window : this
+  if (!global.HTMLElement) console.warn('streamsaver is meant to run on browsers main thread')
+
+  let mitmTransporter = null
+  let supportsTransferable = false
+  const test = fn => { try { fn() } catch (e) {} }
+  const ponyfill = global.WebStreamsPolyfill || {}
+  const isSecureContext = global.isSecureContext
+  let useBlobFallback = /constructor/i.test(global.HTMLElement) || !!global.safari || !!global.WebKitPoint
+  const downloadStrategy = isSecureContext || 'MozAppearance' in document.documentElement.style
+    ? 'iframe'
+    : 'navigate'
+
+  const streamSaver = {
+    createWriteStream,
+    WritableStream: global.WritableStream || ponyfill.WritableStream,
+    supported: true,
+    version: { full: '2.0.5', major: 2, minor: 0, dot: 5 },
+    mitm: null // Will be configured by dipsaus
+  }
+
+  function makeIframe (src) {
+    if (!src) throw new Error('meh')
+    const iframe = document.createElement('iframe')
+    iframe.hidden = true
+    iframe.src = src
+    iframe.loaded = false
+    iframe.name = 'iframe'
+    iframe.isIframe = true
+    iframe.postMessage = (...args) => iframe.contentWindow.postMessage(...args)
+    iframe.addEventListener('load', () => {
+      iframe.loaded = true
+    }, { once: true })
+    document.body.appendChild(iframe)
+    return iframe
+  }
+
+  function makePopup (src) {
+    const options = 'width=200,height=100'
+    const delegate = document.createDocumentFragment()
+    const popup = {
+      frame: global.open(src, 'popup', options),
+      loaded: false,
+      isIframe: false,
+      isPopup: true,
+      remove () { popup.frame.close() },
+      addEventListener (...args) { delegate.addEventListener(...args) },
+      dispatchEvent (...args) { delegate.dispatchEvent(...args) },
+      removeEventListener (...args) { delegate.removeEventListener(...args) },
+      postMessage (...args) { popup.frame.postMessage(...args) }
+    }
+
+    const onReady = evt => {
+      if (evt.source === popup.frame) {
+        popup.loaded = true
+        global.removeEventListener('message', onReady)
+        popup.dispatchEvent(new Event('load'))
+      }
+    }
+
+    global.addEventListener('message', onReady)
+
+    return popup
+  }
+
+  try {
+    new Response(new ReadableStream())
+    if (isSecureContext && !('serviceWorker' in navigator)) {
+      useBlobFallback = true
+    }
+  } catch (err) {
+    useBlobFallback = true
+  }
+
+  test(() => {
+    const { readable } = new TransformStream()
+    const mc = new MessageChannel()
+    mc.port1.postMessage(readable, [readable])
+    mc.port1.close()
+    mc.port2.close()
+    supportsTransferable = true
+    Object.defineProperty(streamSaver, 'TransformStream', {
+      configurable: false,
+      writable: false,
+      value: TransformStream
+    })
+  })
+
+  function loadTransporter () {
+    if (!mitmTransporter) {
+      mitmTransporter = isSecureContext
+        ? makeIframe(streamSaver.mitm)
+        : makePopup(streamSaver.mitm)
+    }
+  }
+
+  function createWriteStream (filename, options, size) {
+    let opts = {
+      size: null,
+      pathname: null,
+      writableStrategy: undefined,
+      readableStrategy: undefined
+    }
+
+    let bytesWritten = 0
+    let downloadUrl = null
+    let channel = null
+    let ts = null
+
+    if (Number.isFinite(options)) {
+      [ size, options ] = [ options, size ]
+      console.warn('[StreamSaver] Deprecated pass an object as 2nd argument when creating a write stream')
+      opts.size = size
+      opts.writableStrategy = options
+    } else if (options && options.highWaterMark) {
+      console.warn('[StreamSaver] Deprecated pass an object as 2nd argument when creating a write stream')
+      opts.size = size
+      opts.writableStrategy = options
+    } else {
+      opts = options || {}
+    }
+
+    if (!useBlobFallback) {
+      loadTransporter()
+
+      channel = new MessageChannel()
+
+      filename = encodeURIComponent(filename.replace(/\//g, ':'))
+        .replace(/['()]/g, escape)
+        .replace(/\*/g, '%2A')
+
+      const response = {
+        transferringReadable: supportsTransferable,
+        pathname: opts.pathname || Math.random().toString().slice(-6) + '/' + filename,
+        headers: {
+          'Content-Type': 'application/octet-stream; charset=utf-8',
+          'Content-Disposition': "attachment; filename*=UTF-8''" + filename
+        }
+      }
+
+      if (opts.size) {
+        response.headers['Content-Length'] = opts.size
+      }
+
+      const args = [ response, '*', [ channel.port2 ] ]
+
+      if (supportsTransferable) {
+        const transformer = downloadStrategy === 'iframe' ? undefined : {
+          transform (chunk, controller) {
+            if (!(chunk instanceof Uint8Array)) {
+              throw new TypeError('Can only write Uint8Arrays')
+            }
+            bytesWritten += chunk.length
+            controller.enqueue(chunk)
+
+            if (downloadUrl) {
+              location.href = downloadUrl
+              downloadUrl = null
+            }
+          },
+          flush () {
+            if (downloadUrl) {
+              location.href = downloadUrl
+            }
+          }
+        }
+        ts = new streamSaver.TransformStream(
+          transformer,
+          opts.writableStrategy,
+          opts.readableStrategy
+        )
+        const readableStream = ts.readable
+
+        channel.port1.postMessage({ readableStream }, [ readableStream ])
+      }
+
+      channel.port1.onmessage = evt => {
+        if (evt.data.download) {
+          if (downloadStrategy === 'navigate') {
+            mitmTransporter.remove()
+            mitmTransporter = null
+            if (bytesWritten) {
+              location.href = evt.data.download
+            } else {
+              downloadUrl = evt.data.download
+            }
+          } else {
+            if (mitmTransporter.isPopup) {
+              mitmTransporter.remove()
+              mitmTransporter = null
+              if (downloadStrategy === 'iframe') {
+                makeIframe(streamSaver.mitm)
+              }
+            }
+
+            makeIframe(evt.data.download)
+          }
+        } else if (evt.data.abort) {
+          chunks = []
+          channel.port1.postMessage('abort')
+          channel.port1.onmessage = null
+          channel.port1.close()
+          channel.port2.close()
+          channel = null
+        }
+      }
+
+      if (mitmTransporter.loaded) {
+        mitmTransporter.postMessage(...args)
+      } else {
+        mitmTransporter.addEventListener('load', () => {
+          mitmTransporter.postMessage(...args)
+        }, { once: true })
+      }
+    }
+
+    let chunks = []
+
+    return (!useBlobFallback && ts && ts.writable) || new streamSaver.WritableStream({
+      write (chunk) {
+        if (!(chunk instanceof Uint8Array)) {
+          throw new TypeError('Can only write Uint8Arrays')
+        }
+        if (useBlobFallback) {
+          chunks.push(chunk)
+          return
+        }
+
+        channel.port1.postMessage(chunk)
+        bytesWritten += chunk.length
+
+        if (downloadUrl) {
+          location.href = downloadUrl
+          downloadUrl = null
+        }
+      },
+      close () {
+        if (useBlobFallback) {
+          const blob = new Blob(chunks, { type: 'application/octet-stream; charset=utf-8' })
+          const link = document.createElement('a')
+          link.href = URL.createObjectURL(blob)
+          link.download = filename
+          link.click()
+        } else {
+          channel.port1.postMessage('end')
+        }
+      },
+      abort () {
+        chunks = []
+        channel.port1.postMessage('abort')
+        channel.port1.onmessage = null
+        channel.port1.close()
+        channel.port2.close()
+        channel = null
+      }
+    }, opts.writableStrategy)
+  }
+
+  return streamSaver
+})();
+
+// Export for ES modules
+/* harmony default export */ const streamsaver = (streamSaver);
+
+// Also attach to window for global access
+if (typeof window !== 'undefined') {
+  window.streamSaver = streamSaver;
+}
+
+;// ./src/shiny-download-stream.js
+/**
+ * Stream download module for dipsaus
+ * Uses StreamSaver.js to push files to browsers
+ */
+
+
+
+
+// Configure StreamSaver mitm path (runs once when module loads)
+let mitmConfigured = false;
+function configureMitm() {
+  if (mitmConfigured) return;
+  mitmConfigured = true;
+  
+  // Find the dipsaus script to determine the base path
+  const scripts = document.getElementsByTagName('script');
+  for (let i = 0; i < scripts.length; i++) {
+    if (scripts[i].src && scripts[i].src.indexOf('dipsaus-dipterix-lib.js') !== -1) {
+      const basePath = scripts[i].src.replace('dipsaus-dipterix-lib.js', '');
+      streamsaver.mitm = basePath + 'streamsaver/mitm.html?version=2.0.0';
+      break;
+    }
+  }
+}
+
+// Store active downloads
+const activeDownloads = new Map();
+
+// Simple ID generator
+function generateId() {
+  return 'dl_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+}
+
+// Helper function to decode base64 to Uint8Array
+function base64ToUint8Array(base64) {
+  const binaryString = atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
+
+// Helper function to show notifications (compatible with Shiny)
+function showNotification(message, type = 'error', duration = null) {
+  // Try Shiny notification first
+  if (typeof Shiny !== 'undefined' && Shiny.notifications && Shiny.notifications.show) {
+    Shiny.notifications.show({
+      html: message,
+      type: type,
+      duration: duration
+    });
+    return;
+  }
+  
+  // Fallback to console
+  if (type === 'error') {
+    console.error('[dipsaus]', message);
+  } else {
+    console.log('[dipsaus]', message);
+  }
+}
+
+function register_streamDownload(Shiny, debug = false) {
+  
+  document_ready(() => {
+    
+    // Configure mitm path once DOM is ready
+    configureMitm();
+    
+    if (debug) {
+      console.log('[dipsaus] Registering stream download handlers');
+      console.log('[dipsaus] StreamSaver mitm path:', streamsaver.mitm);
+    }
+    
+    // Handler: Start a new stream download
+    Shiny.addCustomMessageHandler('dipsaus.streamDownloadStart', (msg) => {
+      try {
+        const downloadId = msg.download_id || generateId();
+        const filename = msg.filename || 'download';
+        const filesize = msg.size || null;
+        
+        if (debug) {
+          console.log('[dipsaus] Starting stream download:', { downloadId, filename, filesize });
+        }
+        
+        // Check if StreamSaver is available and configured
+        if (!streamsaver || !streamsaver.createWriteStream) {
+          throw new Error('StreamSaver.js is not properly loaded');
+        }
+        
+        // Create write stream
+        const opts = {};
+        if (filesize) {
+          opts.size = filesize;
+        }
+        
+        const fileStream = streamsaver.createWriteStream(filename, opts);
+        const writer = fileStream.getWriter();
+        
+        // Store the writer for later chunk writes
+        activeDownloads.set(downloadId, {
+          writer: writer,
+          filename: filename,
+          bytesWritten: 0,
+          totalSize: filesize,
+          startTime: Date.now()
+        });
+        
+        // Notify R that stream is ready
+        Shiny.setInputValue('__dipsaus_stream_download_ready__', {
+          download_id: downloadId,
+          ready: true
+        }, { priority: 'event' });
+        
+      } catch (e) {
+        console.error('[dipsaus] Stream download start error:', e);
+        showNotification('Failed to start download: ' + e.message, 'error');
+        Shiny.setInputValue('__dipsaus_stream_download_error__', {
+          download_id: msg.download_id,
+          error: e.message
+        }, { priority: 'event' });
+      }
+    });
+    
+    // Handler: Write a chunk to the stream
+    Shiny.addCustomMessageHandler('dipsaus.streamDownloadChunk', (msg) => {
+      try {
+        const downloadId = msg.download_id;
+        const download = activeDownloads.get(downloadId);
+        
+        if (!download) {
+          throw new Error('No active download found for ID: ' + downloadId);
+        }
+        
+        // Decode base64 chunk to Uint8Array
+        const bytes = base64ToUint8Array(msg.chunk);
+        
+        // Write to stream
+        download.writer.write(bytes);
+        download.bytesWritten += bytes.length;
+        
+        if (debug && msg.chunk_index % 10 === 0) {
+          console.log('[dipsaus] Stream chunk written:', {
+            downloadId,
+            chunk: msg.chunk_index,
+            bytesWritten: download.bytesWritten
+          });
+        }
+        
+      } catch (e) {
+        console.error('[dipsaus] Stream download chunk error:', e);
+        showNotification('Download failed while writing data: ' + e.message, 'error');
+        
+        // Try to abort the download
+        const download = activeDownloads.get(msg.download_id);
+        if (download && download.writer) {
+          try {
+            download.writer.abort();
+          } catch (abortError) {
+            console.error('[dipsaus] Failed to abort stream:', abortError);
+          }
+        }
+        activeDownloads.delete(msg.download_id);
+        
+        Shiny.setInputValue('__dipsaus_stream_download_error__', {
+          download_id: msg.download_id,
+          error: e.message
+        }, { priority: 'event' });
+      }
+    });
+    
+    // Handler: End the stream download
+    Shiny.addCustomMessageHandler('dipsaus.streamDownloadEnd', (msg) => {
+      try {
+        const downloadId = msg.download_id;
+        const download = activeDownloads.get(downloadId);
+        
+        if (!download) {
+          console.warn('[dipsaus] No active download to complete for ID:', downloadId);
+          return;
+        }
+        
+        // Close the writer
+        download.writer.close();
+        
+        const duration = (Date.now() - download.startTime) / 1000;
+        const sizeMB = (download.bytesWritten / (1024 * 1024)).toFixed(2);
+        
+        if (debug) {
+          console.log('[dipsaus] Stream download complete:', {
+            downloadId,
+            filename: download.filename,
+            bytesWritten: download.bytesWritten,
+            duration: duration + 's',
+            speed: (download.bytesWritten / duration / 1024 / 1024).toFixed(2) + ' MB/s'
+          });
+        }
+        
+        // Clean up
+        activeDownloads.delete(downloadId);
+        
+        // Notify R that download is complete
+        Shiny.setInputValue('__dipsaus_stream_download_complete__', {
+          download_id: downloadId,
+          bytes_written: download.bytesWritten
+        }, { priority: 'event' });
+        
+      } catch (e) {
+        console.error('[dipsaus] Stream download end error:', e);
+        showNotification('Failed to complete download: ' + e.message, 'error');
+        activeDownloads.delete(msg.download_id);
+        Shiny.setInputValue('__dipsaus_stream_download_error__', {
+          download_id: msg.download_id,
+          error: e.message
+        }, { priority: 'event' });
+      }
+    });
+    
+    // Handler: Abort a stream download
+    Shiny.addCustomMessageHandler('dipsaus.streamDownloadAbort', (msg) => {
+      try {
+        const downloadId = msg.download_id;
+        const download = activeDownloads.get(downloadId);
+        
+        if (download) {
+          if (debug) {
+            console.log('[dipsaus] Stream download aborted:', downloadId);
+          }
+          download.writer.abort(msg.reason || 'Download aborted');
+          activeDownloads.delete(downloadId);
+        }
+        
+        const reason = msg.reason || 'Unknown error';
+        console.error('[dipsaus] Download aborted:', reason);
+        showNotification('Download aborted: ' + reason, 'error');
+        
+      } catch (e) {
+        console.error('[dipsaus] Stream download abort error:', e);
+        activeDownloads.delete(msg.download_id);
+      }
+    });
+    
+    // Fallback handler for blob-based downloads (non-streaming)
+    Shiny.addCustomMessageHandler('dipsaus.blobDownloadChunk', (msg) => {
+      try {
+        const downloadId = msg.filename || 'download';
+        
+        // Initialize chunks array for this download
+        if (msg.chunk_index === 1) {
+          window._dipsausBlobChunks = window._dipsausBlobChunks || {};
+          window._dipsausBlobChunks[downloadId] = [];
+          
+          if (debug) {
+            console.log('[dipsaus] Starting blob download:', downloadId);
+          }
+        }
+        
+        // Decode and accumulate chunk (skip if empty completion message)
+        if (msg.chunk && msg.chunk.length > 0) {
+          const bytes = base64ToUint8Array(msg.chunk);
+          window._dipsausBlobChunks[downloadId].push(bytes);
+        }
+        
+        // When complete, create blob and trigger download
+        if (msg.is_complete === true) {
+          const chunks = window._dipsausBlobChunks[downloadId];
+          
+          if (!chunks || chunks.length === 0) {
+            throw new Error('No data received for download');
+          }
+          
+          // Create blob from accumulated chunks
+          const blob = new Blob(chunks, { type: 'application/octet-stream' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = msg.filename || 'download';
+          a.style.display = 'none';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          
+          // Cleanup
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+          delete window._dipsausBlobChunks[downloadId];
+          
+          if (debug) {
+            console.log('[dipsaus] Blob download complete:', downloadId);
+          }
+        }
+        
+      } catch (e) {
+        console.error('[dipsaus] Blob download error:', e);
+        showNotification('Download failed: ' + e.message, 'error');
+        
+        // Cleanup on error
+        if (window._dipsausBlobChunks && msg.filename) {
+          delete window._dipsausBlobChunks[msg.filename];
+        }
+      }
+    });
+    
+    if (debug) {
+      console.log('[dipsaus] Stream download handlers registered');
+    }
+    
+  });
+}
+
 ;// ./src/index.js
 
 
@@ -7895,14 +9624,18 @@ const register_screenshot = (Shiny, debug = false) => {
 
 
 
-const Shiny = window.Shiny;
+
+
+const src_Shiny = window.Shiny;
 const src_DEBUG = true;
 
-register_actionButtonStyled( Shiny, src_DEBUG );
-register_compoundInput2( Shiny, src_DEBUG );
-register_screenshot( Shiny, src_DEBUG );
-register_set_input( Shiny, src_DEBUG );
-register_swal( Shiny, src_DEBUG );
+register_actionButtonStyled( src_Shiny, src_DEBUG );
+register_compoundInput2( src_Shiny, src_DEBUG );
+register_screenshot( src_Shiny, src_DEBUG );
+register_set_input( src_Shiny, src_DEBUG );
+register_swal( src_Shiny, src_DEBUG );
+register_directoryInput( src_Shiny, src_DEBUG );
+register_streamDownload( src_Shiny, src_DEBUG );
 
 
 })();
