@@ -1,6 +1,6 @@
-3fa5b7b316f7cbdde54c35078211b88b *DESCRIPTION
+d592f762996c4af1987b137573b2acf5 *DESCRIPTION
 9de77dfa65f10751f4519c289d448ad0 *NAMESPACE
-016dd78fab1e69104d1af9e09a56e555 *NEWS.md
+244066a6e3fcd800612f9d78dbfb8eba *NEWS.md
 eda50b6a73f691fa77bd237f3fb728f4 *R/RcppExports.R
 f81a8e28e3ff079ee6fe967015b03243 *R/aaa.R
 9bbeb680ce78ec4d20dddc42398544cb *R/apply.R
@@ -51,7 +51,7 @@ d6df9cd97ca588d4c1d77a1403f1e1f3 *R/utils-package.R
 966ad065df7af41f6c893f72a3e78f48 *R/utils.R
 dff8f0178545ce471771cb798e3710ea *R/zzz-finalizers.R
 e1dadbadcb76c82541951aa7287445b1 *R/zzz.R
-c39af29f227e91b7247a38a08c3bbf73 *build/vignette.rds
+ce9879cb0914981324697570b75f0761 *build/vignette.rds
 027b57156a051c2032fa54bb199d8016 *demo/00Index
 85106893974e8f550ecdfc08cb441c1c *demo/example-actionButtonStyled.R
 742e0223091e37e3542bb1616f9ae3dc *demo/example-compountInput2.R
@@ -59,13 +59,13 @@ c39af29f227e91b7247a38a08c3bbf73 *build/vignette.rds
 b7b4a0aaa4affd7253ac0287c583b0ff *inst/WORDLIST
 e05e875b61e4800bf98d349848c4365d *inst/doc/r_expr_addons.R
 bf61aa1dcdec2b73e702dbca28ad8371 *inst/doc/r_expr_addons.Rmd
-5f38a393a981da16435a29634af7e630 *inst/doc/r_expr_addons.html
+5ace442d677cec1f6e69fc4f32fbd65d *inst/doc/r_expr_addons.html
 efffd27331403cba10d0f5618e47037b *inst/doc/shiny_customized_widgets.R
 4bf25112cebede34b033afef6b90d42b *inst/doc/shiny_customized_widgets.Rmd
-479d3ba5457b76af197c482783a2681c *inst/doc/shiny_customized_widgets.html
+822f661391694cf8e9d474a1a03a7c9a *inst/doc/shiny_customized_widgets.html
 e87970ffca584934100703b78c3e6549 *inst/doc/utility_functions.R
 df067a186d8cbeb3e31dc367d08e19f3 *inst/doc/utility_functions.Rmd
-59f560b290fb9173033c2122c06c1149 *inst/doc/utility_functions.html
+fae26da4283623e42f58415fd11475d1 *inst/doc/utility_functions.html
 2c6ead40af621dd90fa74ca8eac471b6 *inst/include/TinyParallel.h
 a1a52c1bc7f2d56ade19643264df5f71 *inst/include/TinyParallel/Common.h
 5c88ffc8ce5719d98d65c83f853ed84b *inst/include/TinyParallel/RVector.h
@@ -75,7 +75,7 @@ bfe0500249c396f2522c894575806c4a *inst/include/TinyParallel/TinyThread.h
 207a354ffe1f2ac1f97c42cca5bc85bd *inst/include/tthread/tinythread.h
 9d61a54db6779348e55e3725a8782ea4 *inst/include/tthread/tinythread.inl
 2d16afac9e3f2d96cfcd57a8a89fe6b0 *inst/rstudio/addins.dcf
-7c8ec8b57ac8495d706484042f84c0c4 *inst/shiny-addons/dipsaus/dipsaus-dipterix-lib.js
+399626d6248625f12af41fb53f003b5f *inst/shiny-addons/dipsaus/dipsaus-dipterix-lib.js
 9e3ee469354190ad961aa770b7bdbb77 *inst/shiny-addons/dipsaus/dipsaus.css
 43df40c864409618b9d3a75eac2f5920 *inst/shiny-addons/dipsaus/streamsaver/mitm.html
 df8378a2cad20244267743d77796fec4 *inst/shiny-addons/dipsaus/streamsaver/sw.js
@@ -197,11 +197,12 @@ e823d7defc727ae523910b0254e79c51 *src/Makevars.win
 48877dece3134d8d48335b02a12c2cb1 *src/rcpp_collapse.cpp
 5ef3807f68f1d98f9d445e9b75553e27 *src/rcpp_fastCov.cpp
 c0e81380eea1db2ca2bfebea79739b36 *src/rcpp_median.cpp
-26fe8494c2dd9317197582ee6a768a18 *src/utils.cpp
+69e7c84bb684ea26ec4a24e4ac7c399f *src/utils.cpp
 d840af21a2da711c09b63846c26a221f *src/utils.h
 168f2f981cb416bd0ee3aa79e43c3d5f *tests/testthat.R
 2a0ef6bd48ed94bfc263aa4ca3a3529d *tests/testthat/test-commandline.R
 d348c30bcc79cf9f7ff65fdd9445b8b6 *tests/testthat/test-locks.R
+b7079d2e06b5a045c7d8c69b23b5a756 *tests/testthat/test-missing-dots.R
 f28e86798ca173e4b34a0f44b66c0465 *tests/testthat/test.async_apply.R
 6986f8a2e5dc652877c65b5d2f6de4d5 *tests/testthat/test.baseline.R
 223915491d3e31b74723885b4d360223 *tests/testthat/test.collapse.R
